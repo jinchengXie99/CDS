@@ -1,0 +1,131 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Project:</h2>
+E:\项目文件\CFJ\奕至\程序\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\KeilC51\FOC_Fortior.uvproj
+Project File Date:  05/17/2021
+
+<h2>Output:</h2>
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+*** Error: Flash Erase failed.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+*** Error: Flash Erase failed.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.
+Load "E:\\项目文件\\CFJ\\奕至\\程序\\SZXDS_SXCYJ_E1V01_C30恒功率-20210513\\KeilC51\\Output\\FOC_Fortior" 
+device is connecting...
+*** Successful: 1
+*** Successful: Device [00] Find--->SN: ftk&0#{53f56307-
+Flash Erase Done.
+Write Ccfg Parameters Done.
+Flash Write Done: 11020 bytes programmed.
+Flash Verify Done: 11020 bytes verified OK, CrcVal:0x13a5.

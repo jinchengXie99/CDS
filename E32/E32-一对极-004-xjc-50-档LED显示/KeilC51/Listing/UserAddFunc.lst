@@ -1,0 +1,522 @@
+C51 COMPILER V9.60.7.0   USERADDFUNC                                                       10/12/2023 09:03:24 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE USERADDFUNC
+OBJECT MODULE PLACED IN .\Output\UserAddFunc.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\User\Source\UserFiles\UserAddFunc.c LARGE OMF2 WARNINGLEVEL(0) OPTIMI
+                    -ZE(5,SPEED) BROWSE INCDIR(..\Library\FU68xx_Hardware_Driver\Include;..\User\Include) DEBUG PRINT(.\Listing\UserAddFunc.l
+                    -st) TABS(2) OBJECT(.\Output\UserAddFunc.obj)
+
+line level    source
+
+   1          /**************************** (C) COPYRIGHT 2017 Fortiortech shenzhen *****************************
+   2          * File Name          : AddFunction.c
+   3          * Author             : Fortiortech  Appliction Team
+   4          * Version            : V1.0
+   5          * Date               : 2017-12-26
+   6          * Description        : This file contains all the add function used for Motor Control.
+   7          ***************************************************************************************************
+   8          * All Rights Reserved
+   9          **************************************************************************************************/
+  10          
+  11          
+  12          /* Includes -------------------------------------------------------------------------------------*/
+  13          // #include <AddFunction.h>
+  14          #include <FU68xx_2.h>
+  15          #include <Myproject.h>
+  16          #include <Customer_Debug.h>
+  17          
+  18          #include <UserGlobal.h>
+  19          #include <UserDefine.h>
+  20          
+  21          /* Private variables ---------------------------------------------------------*/
+  22          
+  23          extern uint16  POWER_VSP;
+  24          extern u8  DrvEnFlag;
+  25          extern u8  KeyOnOffCmd;
+  26          extern u8  ReStartDlyCmd;
+  27          extern u16 ReStartDlyX10ms;
+  28          extern u16 RunningX1ms;
+  29          extern u8  ReStartCnt;
+  30          extern u16 IBusCommandAlt;
+  31          extern u16 IBusCommandAlt;
+  32          extern u16 IBusFilt_mA;
+  33          extern u8  StuckLv;                   // 堵转等级
+  34          extern u8  StartFailLv;               // 启动异常等级
+  35          extern s32 VspRPMCmd;
+  36          
+  37          extern s16 idata Vsp_Q12;
+  38          extern s16 idata VspSpdAlt;
+  39          extern u8  idata AlarmStuck;          // 6 卡住
+  40          extern u8  idata AlarmStartLose;      // 7 启动计算异常
+  41          extern u32 idata MotorRPM;
+  42          extern u32 idata VspPwrCmd;
+  43          extern u32 idata UxISmp;
+  44          //----------------------------------------------------------------------------//
+  45          // 说明：
+  46          void ShutPerform(void)
+  47          {
+  48   1        MOE     = 0;
+  49   1        ClrBit(DRV_CR, FOCEN);  //关闭FOC
+  50   1        mcState = mcReady;
+  51   1        
+  52   1        DrvEnFlag = 0;
+  53   1        Vsp_Q12 = 0;
+C51 COMPILER V9.60.7.0   USERADDFUNC                                                       10/12/2023 09:03:24 PAGE 2   
+
+  54   1        //KeyGoCmdOn = 0;
+  55   1        KeyOnOffCmd = 0;
+  56   1      }
+  57          
+  58          //----------------------------------------------------------------------------//
+  59          // 说明：
+  60          void CancleResatrt(void)
+  61          {
+  62   1        ReStartDlyCmd = 0;
+  63   1        ReStartDlyX10ms = 0;
+  64   1      }
+  65          
+  66          //----------------------------------------------------------------------------//
+  67          // 说明：
+  68          void SetFaultResatrt(void)
+  69          {
+  70   1        if(ReStartDlyCmd == 0)
+  71   1        {
+  72   2          ReStartDlyCmd = 1;
+  73   2        
+  74   2          if((RunningX1ms < 2500)&&(ReStartCnt < FLT_START_TIMES))
+  75   2          {
+  76   3            if(ReStartDlyX10ms == 0)
+  77   3              ReStartDlyX10ms = 10;
+  78   3          }
+  79   2          else
+  80   2            CancleResatrt();
+  81   2        }
+  82   1      }
+  83          
+  84          ////----------------------------------------------------------------------------//
+  85          //// 说明：
+  86          //u8  BrkStage = 0;
+  87          //u16 MtBrakeCnt = 0;
+  88          //void MotorBrake(void)
+  89          //{
+  90          //  if(++MtBrakeCnt >= 500)
+  91          //  {
+  92          //    MtBrakeCnt = 0;
+  93          //    mcState = mcStop;
+  94          //  }
+  95          //  
+  96          //  if(BrkStage == 0)
+  97          //  {
+  98          //    if((mcFocCtrl.mcSysSpeed < BRAKE_SPEED)||                 //_Q15(60000.0/MOTOR_SPEED_BASE)
+  99          //       (MtBrakeCnt > 300))
+ 100          //      BrkStage = 1;
+ 101          //  }
+ 102          //  else
+ 103          //  {
+ 104          //    FOC_SWDUTY = BRAKE_INIT_DUTY;
+ 105          //    FOC_CR1 = 0x06;                   // FOC计数器使能，软件写PWM占空比
+ 106          //    FOC_CMR = 0x15;                   // U相输出  0x15
+ 107          //    MOE = 1;
+ 108          //  }
+ 109          //}
+ 110          
+ 111          //----------------------------------------------------------------------------//
+ 112          // 说明：母线电流PI调节
+ 113          void IBusPI(int16 err)
+ 114          {
+ 115   1        //PI_UKMAX = 2000;
+C51 COMPILER V9.60.7.0   USERADDFUNC                                                       10/12/2023 09:03:24 PAGE 3   
+
+ 116   1        PI_EK = err;
+ 117   1        PI_LPF_CR |= 0x02;                  // Start PI
+ 118   1        _nop_();  _nop_();  _nop_();  _nop_();  _nop_();  _nop_();
+ 119   1        //PI_UK+=(SKP/4096 +1);
+ 120   1        FOC_IQREF = PI_UK;
+ 121   1        
+ 122   1        //PI_LPF_CR &= 0xFD;                  // stop PI
+ 123   1        
+ 124   1      //    PI_EK =  Xn1;         //填入EK
+ 125   1      //    PI_LPF_CR |= 0x02;    // Start PI
+ 126   1      //    _nop_();  _nop_();  _nop_();  _nop_();  _nop_();
+ 127   1      //    PI_UK+=(SKP/4096 +1);
+ 128   1      //    return PI_UK;
+ 129   1      }
+ 130          
+ 131          void EK_deal(void)
+ 132          {
+ 133   1        if(FOC_EK2 < OBS_K2T_Actual-10)
+ 134   1        {
+ 135   2          mcFocCtrl.Smo_EK2=FOC_EK2;
+ 136   2          mcFocCtrl.Smo_EK2+=10;
+ 137   2          FOC_EK2=mcFocCtrl.Smo_EK2;
+ 138   2        }
+ 139   1        else if(FOC_EK2 > OBS_K2T_Actual+10)
+ 140   1        {
+ 141   2          mcFocCtrl.Smo_EK2=FOC_EK2;
+ 142   2          mcFocCtrl.Smo_EK2-=10;
+ 143   2          FOC_EK2=mcFocCtrl.Smo_EK2;
+ 144   2        }
+ 145   1        else
+ 146   1        {
+ 147   2          FOC_EK2=OBS_K2T_Actual;
+ 148   2        }
+ 149   1      }
+ 150          //----------------------------------------------------------------------------//
+ 151          // 说明：功率调节
+ 152          // 将当前母线电压电流检测值相乘，乘积与给定对比，根据比较所得调节电流给定量，使功率达到要求
+ 153          s16 IBusError;
+ 154          s16 IBusPIErr;
+ 155          s32 SpdErr;
+ 156          s16 SpdPIErr;
+ 157          s32 UIErr;
+ 158          s16 UIPIErr;
+ 159          u16 focek2;
+ 160          
+ 161          void Regulation(void)
+ 162          {
+ 163   1        if((mcState ==mcRun)||(mcState ==mcStop))
+ 164   1        {
+ 165   2          switch(mcFocCtrl.CtrlMode)
+ 166   2          {
+ 167   3            case 0:
+ 168   3            {
+ 169   4              if(FOC__EOME > Motor_Loop_Speed)
+ 170   4              {
+ 171   5                FOC_DQKP = DQKP;
+ 172   5                FOC_DQKI = DQKI;
+ 173   5                
+ 174   5                PI_UKMAX   = SOUTMAX;
+ 175   5                PI_UKMIN   = SOUTMIN;
+ 176   5                
+ 177   5                
+C51 COMPILER V9.60.7.0   USERADDFUNC                                                       10/12/2023 09:03:24 PAGE 4   
+
+ 178   5                #if (CONTROL_TARGET==CONTROL_TARGET_POWER)
+                        {
+                          mcFocCtrl.CtrlMode = 1;
+                          
+                          mcFocCtrl.mcIqref = FOC_IQREF;
+                          PI_UK = mcFocCtrl.mcIqref;
+                        
+                          PI_KP = _Q12(0.3);
+                          PI_KI = _Q12(0.01);
+                        }
+                        #elif (CONTROL_TARGET==CONTROL_TARGET_SPEED)
+ 189   5                {
+ 190   6                  mcFocCtrl.CtrlMode = 2;
+ 191   6                    
+ 192   6                  mcFocCtrl.mcIqref = FOC_IQREF;
+ 193   6                  PI_UK = mcFocCtrl.mcIqref;
+ 194   6                  
+ 195   6                  PI_KP = _Q12(0.3);
+ 196   6                  PI_KI = _Q12(0.01);
+ 197   6                  
+ 198   6                  //VspSpdAlt = 10000;//mcFocCtrl.SpeedFlt;//
+ 199   6                }
+ 200   5                #endif
+ 201   5                
+ 202   5                mcFocCtrl.SpeedRamp = 2;
+ 203   5                mcFocCtrl.SpeedLoop = 5;
+ 204   5                //OutLoopParameterSet();       //环路基本参数设置
+ 205   5                
+ 206   5              }
+ 207   4            }
+ 208   3              break;
+ 209   3            case 1:
+ 210   3            {
+ 211   4              #if (OUTLoop_Mode== OUTLoop_Disable)
+                      {
+                        mcFocCtrl.TorqueLoopTime++;
+                        if(mcFocCtrl.TorqueLoopTime>SPEED_LOOP_TIME)
+                        {
+                          mcFocCtrl.TorqueLoopTime=0;
+                          mcFocCtrl.mcIqref = FOC_IQREF;
+                          if (FOC_IQREF < QOUTVALUE)
+                          {
+                            mcFocCtrl.mcIqref += QOUTINC;
+                            if (mcFocCtrl.mcIqref > QOUTVALUE) mcFocCtrl.mcIqref = QOUTVALUE;
+                            FOC_IQREF = mcFocCtrl.mcIqref;
+                          }
+                          else if (FOC_IQREF > QOUTVALUE)
+                          {
+                            mcFocCtrl.mcIqref -= QOUTINC;
+                            if (mcFocCtrl.mcIqref < QOUTVALUE) mcFocCtrl.mcIqref = QOUTVALUE;
+                            FOC_IQREF = mcFocCtrl.mcIqref;
+                          }
+                        }
+                      }
+                      #elif (OUTLoop_Mode== OUTLoop_Enable)
+ 233   4              {
+ 234   5               
+ 235   5                //PI_UKMAX = SOUTMAX;
+ 236   5                //PI_UKMIN = SOUTMIN;
+ 237   5                
+ 238   5                //PI_KP    = _Q12(0.9);
+ 239   5                //PI_KI    = _Q12(0.010);
+C51 COMPILER V9.60.7.0   USERADDFUNC                                                       10/12/2023 09:03:24 PAGE 5   
+
+ 240   5      
+ 241   5      //          //功率调节方法1：----------------------------------------------------//
+ 242   5      //          //IBusPIErr = 150 - IBusFilt_mA;         //调试中，直接对母线电流参考值赋值
+ 243   5      //          IBusPIErr = IBusCommandAlt - IBusFilt_mA;
+ 244   5      //          IBusError = IBusPIErr;
+ 245   5      
+ 246   5      //          #define PWR_PI_ERR_MAX       200  // 为防止PI调节溢出，对输入做限制
+ 247   5      //          #define PWR_PI_ERR_MIN       10   // 为防止PI调节截断，对输入做限制
+ 248   5      //          //if(RunningX1ms > 1000)             // 为获得大转矩，启动不限制；为平稳，运行时限制
+ 249   5      //          {
+ 250   5      //            if(IBusPIErr > 0)
+ 251   5      //            {
+ 252   5      //              if(IBusPIErr > PWR_PI_ERR_MAX)
+ 253   5      //                IBusError = PWR_PI_ERR_MAX;
+ 254   5      //              else if(IBusPIErr < PWR_PI_ERR_MIN)
+ 255   5      //                IBusError = PWR_PI_ERR_MIN;
+ 256   5      //            }
+ 257   5      //            else if(IBusPIErr < 0)
+ 258   5      //            {
+ 259   5      //              if(IBusPIErr < -PWR_PI_ERR_MAX)
+ 260   5      //                IBusError = -PWR_PI_ERR_MAX;
+ 261   5      //              else if(IBusPIErr > -PWR_PI_ERR_MIN)
+ 262   5      //                IBusError = -PWR_PI_ERR_MIN;
+ 263   5      //            }
+ 264   5      //          }
+ 265   5      //          IBusError = IBusError*12;
+ 266   5      //          IBusPI(IBusError);
+ 267   5                          
+ 268   5                //功率调节方法2：----------------------------------------------------//
+ 269   5                // UxISmp是电压电流的采样结果直接相乘，
+ 270   5                // VspPwrCmd是功率参考值，对应电压电流的采样值格式
+ 271   5                
+ 272   5                //VspPwrCmd = MAX_POWER_UXI_SMP;//调试中，直接对功率参考值赋值
+ 273   5                UIErr = VspPwrCmd - UxISmp;
+ 274   5                
+ 275   5                #define PWR_PI_ERR_MAX       10000  // 为防止PI调节溢出，对输入做限制
+ 276   5                
+ 277   5                if(UIErr >= 0)
+ 278   5                {
+ 279   6                  if(UIErr >= PWR_PI_ERR_MAX)
+ 280   6                    UIErr = PWR_PI_ERR_MAX;
+ 281   6                }
+ 282   5                else
+ 283   5                {
+ 284   6                  if(UIErr <= -PWR_PI_ERR_MAX)
+ 285   6                    UIErr = -PWR_PI_ERR_MAX;
+ 286   6                }
+ 287   5                
+ 288   5                UIPIErr = UIErr;
+ 289   5                IBusPI(UIPIErr*3);
+ 290   5      
+ 291   5                //功率调节方法结束----------------------------------------------------//
+ 292   5              }
+ 293   4              #endif //END OUTLoop_Mode
+ 294   4      
+ 295   4              EK_deal();
+ 296   4            }
+ 297   3            break;
+ 298   3            case 2:
+ 299   3            {
+ 300   4              if(++mcFocCtrl.SpeedLoopTime >= 5)
+ 301   4              {
+C51 COMPILER V9.60.7.0   USERADDFUNC                                                       10/12/2023 09:03:24 PAGE 6   
+
+ 302   5                mcFocCtrl.SpeedLoopTime = 0;
+ 303   5                ////
+ 304   5                //PI_UKMAX = SOUTMAX;
+ 305   5                //PI_UKMIN = SOUTMIN;
+ 306   5                //PI_KP    = _Q12(0.2);
+ 307   5                //PI_KI    = _Q12(0.002);
+ 308   5                
+ 309   5      //          VspRPMCmd = 90000;
+ 310   5      //          SpdErr = VspRPMCmd - MotorRPM;//
+ 311   5                if(mcFocCtrl.SpeedFlt > (_Q15(70000 / MOTOR_SPEED_BASE)))
+ 312   5                {
+ 313   6                   FOC_DQKP  = DQKPH;
+ 314   6                   FOC_DQKI  = DQKIH;
+ 315   6                }
+ 316   5                else if(mcFocCtrl.SpeedFlt < (_Q15(35000 / MOTOR_SPEED_BASE)))
+ 317   5                { 
+ 318   6                   FOC_DQKP  = DQKP;
+ 319   6                   FOC_DQKI  = DQKI;
+ 320   6                }
+ 321   5                
+ 322   5                SpdErr =  VspSpdAlt - mcFocCtrl.SpeedFlt;//FOC__EOME;(s32)(s32) 
+ 323   5      
+ 324   5                #define SPD_ERR_MAX 10000
+ 325   5                if(SpdErr > SPD_ERR_MAX)
+ 326   5                  SpdPIErr = SPD_ERR_MAX;
+ 327   5                else if(SpdErr < -SPD_ERR_MAX)
+ 328   5                  SpdPIErr = -SPD_ERR_MAX;
+ 329   5                else
+ 330   5                  SpdPIErr = (s16)SpdErr;
+ 331   5                
+ 332   5                IBusPI(SpdPIErr);
+ 333   5                
+ 334   5                EK_deal();
+ 335   5              }
+ 336   4            }
+ 337   3          }
+ 338   2        }
+ 339   1      }
+ 340          
+ 341          //----------------------------------------------------------------------------//
+ 342          // 启动失败检测
+ 343          void CheckStartFault(void)
+ 344          {
+ 345   1        /*******启动保护恢复*********/
+ 346   1      //  h_Fault->mcEsValue = FOC__ESQU;
+ 347   1      
+ 348   1        if(mcState == mcRun)
+ 349   1        {
+ 350   2          //方法一，5s内速度大于最大速度，同时反电动势值低于一定值
+ 351   2          if(mcFaultDect.StartSpeedCnt <= 2000/2)
+ 352   2          {
+ 353   3            mcFaultDect.StartSpeedCnt++;
+ 354   3            if((mcFocCtrl.SpeedFlt > Motor_Max_Speed)&&(mcFocCtrl.EsValue < 20))
+ 355   3            {
+ 356   4              mcFaultDect.StartSpeedCnt = 0;
+ 357   4              mcProtectTime.StartFlag = 1;
+ 358   4              
+ 359   4              AlarmStartLose = 1;
+ 360   4              StartFailLv = 1;
+ 361   4              ShutPerform();
+ 362   4              SetFaultResatrt();
+ 363   4            }
+C51 COMPILER V9.60.7.0   USERADDFUNC                                                       10/12/2023 09:03:24 PAGE 7   
+
+ 364   3          }
+ 365   2            
+ 366   2         //方法二
+ 367   2          if(mcFaultDect.StartEsCnt <= 2000/2)//前6s，等待1.5s后，开始判断ES，如果超过一定次数，则失败
+ 368   2          {
+ 369   3            mcFaultDect.StartEsCnt++;
+ 370   3            mcFaultDect.StartDelay++;
+ 371   3            if(mcFaultDect.StartDelay >= 1500)        // 1.5s
+ 372   3            {
+ 373   4              mcFaultDect.StartDelay = 1500;
+ 374   4              if((mcFocCtrl.EsValue < 5))//&&(mcFocCtrl.CtrlMode==0))
+ 375   4              {
+ 376   5                  mcFaultDect.StartESCount++;
+ 377   5                  if(mcFaultDect.StartESCount >= 20)
+ 378   5                  {
+ 379   6                    mcFaultDect.StartDelay = 0;
+ 380   6                    mcFaultDect.StartESCount = 0;
+ 381   6                    mcProtectTime.StartFlag = 2;
+ 382   6                    
+ 383   6                    AlarmStartLose = 1;
+ 384   6                    StartFailLv = 2;
+ 385   6                    ShutPerform();
+ 386   6                    SetFaultResatrt();
+ 387   6                  }
+ 388   5              }
+ 389   4              else
+ 390   4              {
+ 391   5                if(mcFaultDect.StartESCount > 0)
+ 392   5                  mcFaultDect.StartESCount--;
+ 393   5              }
+ 394   4           }
+ 395   3         }
+ 396   2         else
+ 397   2         {
+ 398   3           mcFaultDect.StartESCount = 0;
+ 399   3         }
+ 400   2          //方法三，长时间在CtrlMode=0状态
+ 401   2          if(mcFocCtrl.CtrlMode == 0)         //
+ 402   2          {
+ 403   3            mcFaultDect.StartFocmode++;
+ 404   3            if(mcFaultDect.StartFocmode >= 800/2)
+ 405   3            {
+ 406   4              mcFaultDect.StartFocmode = 0;
+ 407   4              mcProtectTime.StartFlag = 3;
+ 408   4              
+ 409   4              AlarmStartLose = 1;
+ 410   4              StartFailLv = 3;
+ 411   4              ShutPerform();
+ 412   4              SetFaultResatrt();
+ 413   4            }
+ 414   3          }
+ 415   2        }
+ 416   1      }
+ 417          /*---------------------------------------------------------------------------*/
+ 418          //堵转保护
+ 419          void CheckStallFault(void)             //void Fault_Stall(FaultVarible *h_Fault)
+ 420          {
+ 421   1        // 只在运行中检测
+ 422   1        if(mcState == mcRun)
+ 423   1        {
+ 424   2          if(mcFaultDect.StallDelayCnt <= 2000/2)//5s
+ 425   2          {
+C51 COMPILER V9.60.7.0   USERADDFUNC                                                       10/12/2023 09:03:24 PAGE 8   
+
+ 426   3            mcFaultDect.StallDelayCnt ++;
+ 427   3          }
+ 428   2          else
+ 429   2          {
+ 430   3            //method 1，判断反电动势太小或当反电动势太小，转速太大
+ 431   3            if((mcFocCtrl.EsValue < 10)||
+ 432   3               ((FOC__EOME > _Q15(800.0/MOTOR_SPEED_BASE))&&(mcFocCtrl.EsValue < 40)))
+ 433   3            {
+ 434   4              mcFaultDect.StallDectEs++;
+ 435   4              if(mcFaultDect.StallDectEs >= 10)
+ 436   4              {
+ 437   5                mcFaultDect.StallDectEs = 0;
+ 438   5                mcProtectTime.StallFlag = 1;
+ 439   5      
+ 440   5                StuckLv = 1;
+ 441   5                AlarmStuck = 1;
+ 442   5                ShutPerform();
+ 443   5                SetFaultResatrt();
+ 444   5                
+ 445   5              }
+ 446   4            }
+ 447   3            else
+ 448   3            {
+ 449   4              if(mcFaultDect.StallDectEs > 0)
+ 450   4                mcFaultDect.StallDectEs--;
+ 451   4            }
+ 452   3            //method 2，判断速度低于堵转最小值或者超过堵转最大值
+ 453   3            if((mcFocCtrl.SpeedFlt < Motor_Stall_Min_Speed)||(mcFocCtrl.SpeedFlt > Motor_Stall_Max_Speed))
+ 454   3            {
+ 455   4              mcFaultDect.StallDectSpeed++;
+ 456   4              if(mcFaultDect.StallDectSpeed >= 8)
+ 457   4              {
+ 458   5                mcFaultDect.StallDectSpeed = 0;
+ 459   5                mcProtectTime.StallFlag = 2;
+ 460   5                
+ 461   5                if(mcFocCtrl.SpeedFlt < Motor_Stall_Min_Speed)
+ 462   5                  StuckLv = 2;
+ 463   5                else
+ 464   5                  StuckLv = 3;
+ 465   5                AlarmStuck = 1;
+ 466   5                ShutPerform();
+ 467   5                SetFaultResatrt();
+ 468   5              }
+ 469   4            }
+ 470   3            else
+ 471   3            {
+ 472   4              if(mcFaultDect.StallDectSpeed > 0)
+ 473   4                mcFaultDect.StallDectSpeed--;
+ 474   4            }
+ 475   3          }
+ 476   2        }
+ 477   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1471    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     18    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.60.7.0   USERADDFUNC                                                       10/12/2023 09:03:24 PAGE 9   
+
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

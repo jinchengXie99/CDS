@@ -1,0 +1,1 @@
+"..\User\Source\UserFiles\UserSignal.c" LARGE OMF2 WARNINGLEVEL (0) OPTIMIZE (5,SPEED) BROWSE INCDIR(..\Library\FU68xx_Hardware_Driver\Include;..\User\Include) DEBUG PRINT(.\Listing\UserSignal.lst) TABS (2) OBJECT(.\Output\UserSignal.obj)

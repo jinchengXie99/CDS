@@ -1,0 +1,44 @@
+C51 COMPILER V9.56.0.0   USERTEST                                                          05/28/2021 16:01:30 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE USERTEST
+OBJECT MODULE PLACED IN .\Output\UserTest.obj
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE ..\User\Source\UserFiles\UserTest.c LARGE OMF2 WARNINGLEVEL(0) OPTIMIZE(5,S
+                    -PEED) BROWSE INCDIR(..\Library\FU68xx_Hardware_Driver\Include;..\User\Include) DEBUG PRINT(.\Listing\UserTest.lst) TABS(
+                    -2) OBJECT(.\Output\UserTest.obj)
+
+line level    source
+
+   1          
+   2          /* Includes -------------------------------------------------------------------------------------*/
+   3          #include <FU68xx_2.h>
+   4          #include <Myproject.h>
+   5          #include <Customer_Debug.h>
+   6          
+   7          /* Private typedef ------------------------------------------------------------------------------*/
+   8          /* Private define -------------------------------------------------------------------------------*/
+   9          /* Private macro --------------------------------------------------------------------------------*/
+  10          /* Private variables ----------------------------------------------------------------------------*/
+  11          /* Private function prototypes ------------------------------------------------------------------*/
+  12          /* Private functions ----------------------------------------------------------------------------*/
+  13          
+  14          
+  15          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

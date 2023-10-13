@@ -1,0 +1,416 @@
+
+/**************************** (C) COPYRIGHT 2017 Fortiortech shenzhen *****************************
+* File Name          : Customer.h
+* Author             : Fortiortech Appliction Team
+* Version            : V1.0
+* Date               : 2017-12-21
+* Description        : This file contains all the common data types used for
+*                      Motor Control.
+***************************************************************************************************
+* All Rights Reserved
+**************************************************************************************************/
+
+/* Define to prevent recursive inclusion --------------------------------------------------------*/
+#ifndef __CUSTOMER_H_
+#define __CUSTOMER_H_
+
+#define I_ValueX(Curr_Value)            (Curr_Value * HW_RSHUNT * HW_AMPGAIN / HW_ADC_REF)
+#define I_Value(Curr_Value)             _Q15(I_ValueX(Curr_Value))
+/*芯片参数值-------------------------------------------------------------------*/
+/*CPU and PWM Parameter*/
+#define MCU_CLOCK                      (24.0)                                  // (MHz) 主频
+#define PWM_FREQUENCY                  (24.0)                                  // (kHz) 载波频率
+
+/*deadtime Parameter*/
+#define PWM_DEADTIME                   (1.0)                                   // (us) 死区时间
+
+/*single resistor sample Parameter*/
+#define MIN_WIND_TIME                  (2.0)                                   // (us) 单电阻最小采样窗口，建议值死区时间+0.9us
+
+//// 2对极 100V 100W    L 1.12mh    R 8.35Ω   U 186V   T 294us-----------//
+//#define Pole_Pairs                     (2)            // 极对数                
+//#define LD                             (0.00112/2*0.70)  // (H)                   // D轴电感
+//#define LQ                             (0.00112/2*0.70)   // (H)                  // Q轴电感
+//#define RS                             (8.35/2*1.0)       // (Ω)                // 相电阻
+//#define KeVpp                          (54.0*0.7)         // (V)              // 反电动势测量的峰峰值
+//#define KeT                            (1.0)              // (ms)            // 反电动势测量的周期
+//#define Ke                             (Pole_Pairs * KeVpp * KeT / 207.84)     // (V/KRPM) 反电动势常数
+
+//// 2对极 120V 100W    L 1.99mh    R 10.9Ω   U  42.2V   T  1.572ms -> (66.33*1.0)-----------//
+//#define Pole_Pairs                     (2)                // 极对数                
+//#define LD                             (0.00199/2*0.50)   // (H)               // D轴电感
+//#define LQ                             (0.00199/2*0.50)   // (H)               // Q轴电感
+//#define RS                             (10.9/2*0.70)      // (Ω)              // 相电阻
+//#define KeVpp                          (66.33*0.80)       // (V)               // 反电动势测量的峰峰值
+//#define KeT                            (1.0)              // (ms)              // 反电动势测量的周期
+//#define Ke                             (Pole_Pairs * KeVpp * KeT / 207.84)     // (V/KRPM) 反电动势常数
+
+// 2对极 220V 100W    L 7.1mh     R 43.3Ω    U 310.0V   T 340us -> (105.4*1.0)
+#define Pole_Pairs                     (2)                                     // 极对数
+#define LD                             (0.0071/2*0.30)                          // (H) D轴电感
+#define LQ                             (0.0071/2*0.30)                          // (H) Q轴电感
+#define RS                             (43.3/2*0.37)                            // (Ω) 相电阻
+#define KeVpp                          (105.4*0.90)                            // (V)      反电动势测量的峰峰值
+#define KeT                            (1.0)                                   // (ms)     反电动势测量的周期
+#define Ke                             (Pole_Pairs * KeVpp * KeT / 207.84)     // (V/KRPM) 反电动势常数
+
+#define MOTOR_SPEED_BASE               (180000.0)                              // (RPM) 速度基准
+
+#define S_Value(SpeedValue)            _Q15((SpeedValue+35)/MOTOR_SPEED_BASE)
+#define MOTOR_Pow_BASE                 (6000.0)                                // (RPM) 功率基准
+#define P_Value(PowValue)              _Q15((PowValue+1)/MOTOR_Pow_BASE)
+
+/*硬件板子参数设置值------------------------------------------------------------*/
+/*PWM high or low level Mode*/
+/*根据驱动芯片的类型选择，大部分芯片为High_Level*/
+#define High_Level                     (0)                                     // 驱动高电平有效
+#define Low_Level                      (1)                                     // 驱动低电平有效
+#define UP_H_DOWN_L                    (2)                                     // 上桥臂高电平有效，下桥臂低电平有效
+#define UP_L_DOWN_H                    (3)                                     // 上桥臂低电平有效，下桥臂高电平有效
+#define PWM_Level_Mode                 (High_Level)
+
+/*hardware current sample Parameter*/
+/*电流基准的电路参数*/
+/*weizhen*/
+#define HW_RSHUNT                      (0.1)                                   // (Ω)  采样电阻
+#define HW_ADC_REF                     (5.0)                                   // (V)  ADC参考电压
+#define HW_AMPGAIN                     (3.4)                                   // 运放放大倍数
+/* current set value */
+
+/*hardware voltage sample Parameter*/
+/*母线电压采样分压电路参数*/
+#define RV1                            (470.0)                                 // (kΩ) 母线电压分压电阻1
+#define RV2                            (470.0)                                 // (kΩ) 母线电压分压电阻2
+#define RV3                            (10.0)                                  // (kΩ) 母线电压分压电阻3
+#define VC1                            (1.2)                                   // 电压补偿系数
+#define RV                             ((RV1 + RV2 + RV3) / RV3)               // 分压比
+#define HW_BOARD_VOLT_MAX              (HW_ADC_REF * RV)                       // (V)  ADC可测得的最大母线电压
+
+/*时间设置值-------------------------------------------------------------------*/
+#define Calib_Time                     (2000)                                  // 校正次数，固定1000次，单位:次
+#define Charge_Time                    (300)                                   // (ms) 预充电时间，单位：ms
+#define Align_Time                     (100)                                   // (ms) 预定位时间，单位：ms
+
+/*正常运行时估算算法的参数设置值-------------------------------------------------*/
+#define OBS_KSLIDE                     _Q15(0.85)                              // SMO算法里的滑膜增益值
+#define E_BW                           (1.5*BASE_FREQ)                         // PLL算法里的反电动势滤波值
+
+/*逆风判断时的估算算法设置值-----------------------------------------------------*/
+#define TailWind_Time                  (250)                                   // (ms) 顺逆风检测时间
+#define ATO_BW_Wind                    (120.0)//120.0-PLL 120.0-smo            // 逆风判断观测器带宽的滤波值，经典值为8.0-100.0
+#define SPD_BW_Wind                    (10.0)//10.0-PLL  ,10.0-smo             // 逆风判断速度带宽的滤波值，经典值为5.0-40.0
+
+/**逆风顺风状态下的KP、KI****/
+#define DQKP_TailWind                  _Q12(1.5)                               //_Q12(1.0)-PLL ,   _Q12(1.5)   -smo
+#define DQKI_TailWind                  _Q15(0.18)                              //_Q15(0.08)-PLL  ,_Q15(0.2)-smo
+
+/*启动参数参数值----------------------------------------------------------------*/
+/*********** RPD parameter ***********/
+/******* 初始位置检查参数 **********/
+#define PosCheckEnable                 (0)                                     // 初始位置使能
+#define AlignTestMode                  (0)                                     // 预定位测试模式
+
+/*脉冲注入时间长于2ms 或 低于2ms*/
+#define Long_Inject                    (0)                                     // 脉冲注入时间长于2ms,若时间长于4ms，则要修改定时器分频
+#define Short_Inject                   (1)                                     // 脉冲注入时间低于2ms
+#define InjectTime                     (Short_Inject)
+
+#define RPD_Time                       (3)                                     // (ms) 每次RPD的时间
+#define RPD_CurValue                   (0.2)                                   // (A)  RPD过流值
+#define DAC_RPDCurValue                _Q7(I_ValueX(RPD_CurValue * 2))
+
+/***预定位的Kp、Ki****/
+#define DQKP_Alignment                 _Q12(1.0)                               // 预定位的KP
+#define DQKI_Alignment                 _Q12(0.01)                              // 预定位的KI
+#define ID_Align_CURRENT               I_Value(0.0)                            // (A) D轴定位电流
+#define IQ_Align_CURRENT               I_Value(0.35)                           // (A) Q轴定位电流
+#define Align_Angle                    (0.0)                                   // (°) 预定位角度
+
+/***启动电流****/
+#define ID_Start_CURRENT               I_Value(0.0)                            // (A) D轴启动电流
+#define IQ_Start_CURRENT               I_Value(0.45)                           // (A) Q轴启动电流
+
+/***运行电流****/
+#define ID_RUN_CURRENT                 I_Value(0.0)                            // (A) D轴运行电流
+#define IQ_RUN_CURRENT                 I_Value(0.4)                            // (A) Q轴运行电流
+
+/***限制电流****/
+#define LIMIT_MIN_CURRENT              I_Value(0.3)                            // (A) Q轴限制电流
+
+///********Omega启动的参数**********/
+#define ATO_BW                         (100.0)                                 // 观测器带宽的滤波值，经典值为1.0-200.0
+#define ATO_BW_RUN                     (150.0)
+#define ATO_BW_RUN1                    (200.0)
+#define ATO_BW_RUN2                    (250.0)
+#define ATO_BW_RUN3                    (300.0)
+#define ATO_BW_RUN4                    (350.0)
+
+#define SPD_BW                         (15.0)                                  // 速度带宽的滤波值，经典值为5.0-40.0
+#define ATT_COEF                       (0.85)                                  // 无需改动
+
+/*转速参数值-------------------------------------------------------------------*/
+/* motor start speed value */
+//open 算法启动参数
+#define MOTOR_OPEN_ACC                 (3.0)                                   // 强拖启动的增量(每载波周期加一次)
+#define MOTOR_OPEN_ACC_MIN             (5.0)                                   // 强拖启动的初始速度
+#define MOTOR_OPEN_ACC_CNT             (15.0)                                  // 强拖启动的执行次数(MOTOR_OPEN_ACC_CNT*256)
+#define MOTOR_OPEN_ACC_CYCLE           (1)                                     // 强拖启动循环拖动的次数
+
+//OMEGA启动参数
+// #define Motor_Omega_Ramp_ACC_Antiwind  (20.0)                               // omega启动的增量   12
+
+#define Motor_Omega_Ramp_ACC           (40.0)                                  // omega启动的增量   12
+#define MOTOR_OMEGA_ACC_MIN            (800.0)                                 // (RPM) omega启动的最小切换转速
+#define MOTOR_OMEGA_ACC_END            (1000.0)                                // (RPM) omega启动的限制转速
+
+/* motor loop control speed value */
+#define MOTOR_LOOP_RPM                 (3000.0)                                // (RPM) 由mode 0到mode1切换转速，即闭环切换转速
+
+/* motor run speed value */
+//电机运行时最大最小转速、堵转保护转速
+#define MOTOR_SPEED_SMOMIN_RPM         (2000.0)                                // (RPM) SMO运行最小转速
+
+#define MOTOR_SPEED_MIN_RPM            (10000.0)                               // (RPM) 运行最小转速
+#define MOTOR_SPEED_MAX_RPM            (130000.0)                              // (RPM) 运行最大转速
+#define MOTOR_SPEED_LIMIT_RPM          (150000.0)
+#define MOTOR_SPEED_STAL_MAX_RPM       (140000.0)                              // (RPM) 堵转保护转速
+#define MOTOR_SPEED_STAL_MIN_RPM       (40000.0)
+
+#define MOTOR_SPEED_STOP_RPM           (60000.0)                               // (RPM) 运行最小转速
+
+#define Motor_Max_Power                (4000)
+#define Motor_Min_Power                (400)
+
+/*电机开机、关机的设置----------------------------------------------------------*/
+/* motor ON/0FF value */
+#define OFFPWMDuty                     _Q15(0.02)                              // 关机PWM占空比，小于该占空比关机
+#define OFFPWMDutyHigh                 _Q15(1.0)                               // 关机PWM占空比，大于该占空比关机
+#define ONPWMDuty                      _Q15(0.05)                              // 开机PWM占空比，大于该占空比时开机
+#define MINPWMDuty                     _Q15(0.08)                              // 速度曲线上最小PWM占空比
+#define MAXPWMDuty                     _Q15(0.95)                              // 速度曲线上最大PWM占空比
+
+/*******运行时的参数*****************/
+/*电流环参数设置值--------------------------------------------------------------*/
+
+#define DQKPStart                      _Q12(0.8)                               // DQ轴KP
+#define DQKIStart                      _Q15(0.003)                             // DQ轴KI
+
+#define DQKP                           _Q12(1.0)                               // DQ轴KP
+#define DQKI                           _Q15(0.01)                              // DQ轴KI
+
+#define DQKPH                          _Q12(1.0)                               // DQ轴KP
+#define DQKIH                          _Q15(0.01)                              // DQ轴KI
+
+/* D轴参数设置 */
+#define DOUTMAX                        _Q15(0.5)                               // D轴最大限幅值，单位：输出占空比
+#define DOUTMIN                        _Q15(-0.5)                              // D轴最小限幅值，单位：输出占空比
+/* Q轴参数设置，默认0.99即可 */
+#define QOUTMAX                        _Q15(0.99)                              // Q轴最大限幅值，单位：输出占空比
+#define QOUTMIN                        _Q15(-0.99)                             // Q轴最小限幅值，单位：输出占空比
+
+#define QOUTMINST                      _Q15(0.1)                               // 启动时Q轴最小限幅
+#define QOUTMINSTEND                   _Q15(0.04)             
+
+//电流环的参数值
+#define QOUTINC                        (1)                                     // Q轴电流增大步进值,开环控制时有效
+#define QOUTCURRENT                    (0.7)                                   // (A) Q轴输出电流,开环控制时有效
+#define QOUTVALUE                      I_Value(QOUTCURRENT)
+
+/*外环参数设置值----------------------------------------------------------------*/
+#define SPEED_LOOP_TIME                (2)                                     // (ms) 速度环调节周期 风扇速度环50，功率环5
+
+#define SKP                            _Q12(0.4)                               // 外环KP
+#define SKI                            _Q12(0.01)                              // 外环KI
+
+//高转速KP，KI
+#define SKPH                           _Q12(0.5)                               // 外环KP
+#define SKIH                           _Q12(0.008)                             // 外环KI 
+
+#define SOUTMAX                        I_Value(1.10)                           // (A) 外环最大限幅值
+#define SOUTMIN                        I_Value(0.00)                           // (A) 外环最小限幅值
+
+#define SPEEDRAMPTIME                  (8.0)                                   // (ms) 速度环增量时间，13ms增/减一次
+
+#define SpeedRampStartInc               (400.0)                                // 启动速度环增量 
+#define SpeedRampStartDec               (400.0)                                // 启动速度环减量 
+
+#define SpeedRampInc                    (1000.0)                               // 运行速度环增量 
+#define SpeedRampDec                    (1000.0)                               // 运行速度环减量 
+
+#define PowRampInc                      (1.0)                                  // 运行速度环增量 
+#define PowRampDec                      (2.0)                                  // 运行速度环减量 
+
+/*功率环参数设置-----------------------------------------------------------*/
+// #define   PKP                            _Q12(0.2)                          // speed loop KP
+// #define   PKI                            _Q12(0.004)                        // speed loop KI
+  
+#define POWER_LOW_Gear                  40
+#define POWER_Gear                      25
+#define POWER_HIGH_Gear                 20
+#define POWER_K                         (float)(131.0)                         //功率比例系数
+
+/*外环使能*/
+#define OUTLoop_Disable                (0)                                     // 关闭外环
+#define OUTLoop_Enable                 (1)                                     // 使能外环
+#define OUTLoop_Mode                   (OUTLoop_Enable)
+
+/*外环选择功率环或速度环*/
+#define POWER_LOOP_CONTROL             (0)                                     //恒功率
+#define SPEED_LOOP_CONTROL             (1)                                     //恒转速
+#define Motor_Speed_Control_Mode       (SPEED_LOOP_CONTROL)
+
+//调速模式
+#define PWMMODE                        (0)                                     // PWM调速
+#define SREFMODE                       (1)                                     // 模拟调速
+#define NONEMODE                       (2)                                     // 直接给定值，不调速
+#define SPEED_MODE                     (NONEMODE)
+
+/*Key Scan Parameter*/
+#define KeyFilterTime                    (20)                                  // Key滤波时间  目前单位 20ms
+
+/*模式选择设置值----------------------------------------------------------------*/
+/*IPM测试模式*/
+#define IPMtest                        (0)                                     // IPM测试或者MOS测试，MCU输出固定占空比
+#define NormalRun                      (1)                                     // 正常按电机状态机运行
+#define IPMState                       (NormalRun)
+
+/*估算器模式选择*/
+#define SMO                            (0)                                     // SMO ,滑膜估算
+#define PLL                            (1)                                     // PLL ,锁相环
+#define EstimateAlgorithm              (SMO)
+
+/*顺逆风判断设置*/
+#define NoTailWind                     (0)                                     // 无逆风顺风判断
+#define TailWind                       (1)                                     // 逆风顺风判断
+#define TailWind_Mode                  (NoTailWind)
+
+/*顺逆风判断方法*/
+#define RSDMethod                      (0)                                     // RSD比较器方法
+#define BEMFMethod                     (1)                                     // BEMF方法
+#define FOCMethod                      (2)                                     // FOC计算方法
+#define FRDetectMethod                 (FOCMethod)
+
+/*开环启动模式选择*/
+#define Open_Start                     (0)                                     // 开环强拖启动
+#define Omega_Start                    (1)                                     // Omega启动
+#define Open_Omega_Start               (2)                                     // 先开环启，后Omega启动
+#define Open_Start_Mode                (Omega_Start)
+
+/*电流采样模式*/
+#define Single_Resistor                (0)                                     // 单电阻电流采样模式
+#define Double_Resistor                (1)                                     // 双电阻电流采样模式
+#define Three_Resistor                 (2)                                     // 三电阻电流采样模式
+#define Shunt_Resistor_Mode            (Single_Resistor)
+
+#define OverModulation                 (0)                                     // 0-禁止过调制，1-使能过调制
+#define IRMODE                         (0)                                     // 正反转模式，正转为0，反转为1
+
+/*保护参数值-------------------------------------------------------------------*/
+/*硬件过流保护*/
+#define Hardware_FO_Protect            (1)                                     // 硬件FO过流保护使能，适用于IPM有FO保护的场合
+#define Hardware_CMP_Protect           (2)                                     // 硬件CMP比较过流保护使能，适用于MOS管应用场合
+#define Hardware_FO_CMP_Protect        (3)                                     // 硬件CMP比较和FO过流保护都使能
+#define Hardware_Protect_Disable       (4)                                     // 硬件过流保护禁止，用于测试
+#define HardwareCurrent_Protect        (Hardware_CMP_Protect)                  // 硬件过流保护实现方式
+
+/*硬件过流保护比较值来源*/
+#define Compare_DAC                    (0)                                     // DAC设置硬件过流值
+#define Compare_Hardware               (1)                                     // 硬件设置硬件过流值
+#define Compare_Mode                   (Compare_DAC)                           // 硬件过流值的来源
+#define OverHardcurrentValue           (4.0)                                   // (A) DAC模式下的硬件过流值
+
+/*软件过流保护*/
+#define OverSoftCurrentValue           I_Value(10.0)                           // (A) 软件过流值
+
+/*过流恢复*/
+#define CurrentRecoverEnable           (0)                                     // 过流保护使能位, 0，不使能；1，使能
+#define OverCurrentRecoverTime         (1000)                                  // (5ms) 过流保护恢复时间
+
+/*过欠压保护*/
+#define Over_Protect_Voltage           (380)                                   // (V) 直流电压过压保护值
+#define Over_Recover_Vlotage           (360)                                   // (V) 直流电压过压保护恢复值
+#define Under_Protect_Voltage          (100)                                   // (V) 直流电压欠压保护值
+#define Under_Recover_Vlotage          (110)                                   // (V) 直流电压欠压保护恢复值
+
+/*缺相保护*/
+#define PhaseLossCurrentValue          300//I_Value(0.3)                       // (A)  缺相电流值
+#define PhaseLossRecoverTime           (1000)                                  // (5ms) 缺相保护时间
+
+/*堵转保护*/
+#define StallCurrentValue              I_Value(2.0)                            // (A)  堵转过流值
+#define StallRecoverTime               (200)                                   // (5ms) 堵转保护运行时间
+
+/*启动保护*/
+#define StartProtectRestartTimes       (4)                                     // 启动保护重启次数，单位：次
+#define StartRecoverDelayTimes         (2000)                                  //(5ms)启动保护延时恢复时间
+
+/*功率保护*/
+#define PowerLimit                     (4500)                                  // 功率上限值 6500:300W
+#define OverPowerRecoverTime           (12000)                                 // (5ms) 功率保护恢复时间
+/*功率保护恢复*/
+#define PowerRecoverEnable             (0)                                     //0，不使能；1，使能 
+
+/*保护使能*/
+#define VoltageProtectEnable           (1)                                     // 电压保护，0,不使能；1，使能
+#define StartProtectEnable             (1)                                     // 启动保护，0,不使能；1，使能
+#define StallProtectEnable             (1)                                     // 堵转保护，0,不使能；1，使能
+#define PhaseLossProtectEnable         (0)                                     // 缺相保护，0,不使能；1，使能
+#define OverPowerProtectEnable         (0)                                     // 功率保护，0,不使能；1，使能
+
+#define TemperatureProtectEnable       (1)
+
+/******启停测试参数******/
+#define StartONOFF_Enable              (0)
+#define StartON_Time                   (1500)                                  // (ms) 启动运行时间
+#define StartOFF_Time                  (5000)                                  // (ms) 停止时间
+#define Motor_Test_Speed               _Q15(100000 / MOTOR_SPEED_BASE)         // (RPM) 运行最小转速Motor_Test_Speed
+
+#define StopBrakeFlag                  (1)
+#define StopWaitTime                   (1000)                                  // (ms) 刹车等待时间
+
+/*************速度控制挡位******************/
+#define Motor_Speed_Low                _Q15(90000 / MOTOR_SPEED_BASE) 
+#define Motor_Speed_Mid                _Q15(70000 / MOTOR_SPEED_BASE) 
+#define Motor_Speed_HIgh               _Q15(70000 / MOTOR_SPEED_BASE) 
+
+/*************温度控制挡位******************/
+// #define Temperature_Off                (22000)          
+// #define Temperature_LOW                (13800)
+// #define Temperature_Mid                (12000)
+// #define Temperature_High               (11000)                              //输出限制
+// 
+// #define Temperature_ADCLOW             (14000)                              //NTC60度电阻值24K
+// #define Temperature_ADCMid             (12000)                              //NTC80度电阻值12K
+// #define Temperature_ADCHigh            (11000)                              //NTC100度电阻值6.6K
+
+#define Temp_Off                        (0)          //关
+#define Temp_LOW                        (13)
+#define Temp_Mid                        (21)
+#define Temp_High                       (25)  
+//#define Temp_Open                      (20)       //全开
+
+/****控制板温度****/
+#define Tempera_Value(NTC_Value)        _Q15((5.0*NTC_Value/(PullResistor+NTC_Value))/HW_ADC_REF) 
+#define PullResistor                    10                                     // NTC上拉电阻
+#define OVER_Temperature                Tempera_Value(5.5)                     // 过温保护阈值，根据NTC曲线设定
+#define UNDER_Temperature               Tempera_Value(6.5)                      // 低温恢复阈值，根据NTC曲线设定
+#define OverTemperRecoverTime           3000                                    // 温度恢复检测重启时间
+
+/***发热丝温度***/
+// #define TemperatureProtectvalue        (5 * HTempK * 32757 / 4.5)           //温度保护值
+// #define TemperatureRecovervalue        (5 * HRTempK *32757 / 4.5)           //温度保护恢复值
+// 基准4.5V时注意 HTempK 小于0.9 算出来大于0.9时直接填0.9
+  
+#define TemperatureProtectvalue        (HTempK * 32757)                        //温度保护值
+#define TemperatureRecovervalue        (HRTempK *32757)                        //温度保护恢复值
+#define HTempK                         (Ht_ntc / (Ht_ntc + 51))
+#define HRTempK                        (HRt_ntc / (HRt_ntc + 51))
+
+#define Ht_ntc                         (float)(0.574)                          //高温保护 对应NTC阻值（K）
+#define HRt_ntc                        (float)(0.8686)                         //高温保护恢复 对应NTC阻值（K）
+
+#define Lt_ntc                         (float)(327)
+
+#define Brakeduty_F                    (0.7)
+
+#endif

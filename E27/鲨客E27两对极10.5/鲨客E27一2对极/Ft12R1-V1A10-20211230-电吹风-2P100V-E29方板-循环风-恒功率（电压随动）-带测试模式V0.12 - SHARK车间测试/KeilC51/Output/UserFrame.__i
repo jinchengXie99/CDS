@@ -1,0 +1,1 @@
+"..\User\Source\UserFiles\UserFrame.c" LARGE OMF2 WARNINGLEVEL (0) OPTIMIZE (5,SPEED) BROWSE INCDIR(..\Library\FU68xx_Hardware_Driver\Include;..\User\Include) DEBUG PRINT(.\Listing\UserFrame.lst) TABS (2) OBJECT(.\Output\UserFrame.obj)

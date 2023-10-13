@@ -1,0 +1,1324 @@
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE USERDRYER
+OBJECT MODULE PLACED IN .\Output\UserDryer.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\User\Source\UserFiles\UserDryer.c LARGE OMF2 WARNINGLEVEL(0) OPTIMIZE
+                    -(5,SPEED) BROWSE INCDIR(..\Library\FU68xx_Hardware_Driver\Include;..\User\Include) DEBUG PRINT(.\Listing\UserDryer.lst) 
+                    -TABS(2) OBJECT(.\Output\UserDryer.obj)
+
+line level    source
+
+   1          
+   2          
+   3          /* Includes -------------------------------------------------------------------------------------*/
+   4          #include <FU68xx_2.h>
+   5          #include <Myproject.h>
+   6          #include <Customer_Debug.h>
+   7          
+   8          #include <UserGlobal.h>
+   9          #include <UserDefine.h>
+  10          
+  11          /* Private typedef ------------------------------------------------------------------------------*/
+  12          /* Private define -------------------------------------------------------------------------------*/
+  13          /* Private macro --------------------------------------------------------------------------------*/
+  14          /* Private variables ----------------------------------------------------------------------------*/
+  15          /* Private function prototypes ------------------------------------------------------------------*/
+  16          /* Private functions ----------------------------------------------------------------------------*/
+  17          
+  18          //============================================================================//
+  19          
+  20          // ·½°å
+  21          #define KEY_ON                GP06          // ¿ªÆô¶Ë
+  22          #define KEY_LOCK              GP05          // Ëø¶¨¶Ë
+  23          
+  24          #define KEY_SPEED             GP17          // ËÙ¶È°´¼ü
+  25          #define KEY_HEAT              GP15          // ÈÈ¶È°´¼ü
+  26          #define KEY_COOL              GP13          // Àä·ç°´¼ü
+  27          
+  28          #define LED_SPEED_1           GP03          // ·çËÙµÆ
+  29          #define LED_SPEED_2           GP02
+  30          #define LED_SPEED_3           GP01
+  31          
+  32          #define LED_HEAT_1            GP00          // ÈÈÁ¿µÆ
+  33          #define LED_HEAT_2            GP37
+  34          #define LED_HEAT_3            GP36
+  35          
+  36          
+  37          
+  38          // xjc µµÎ»¶þ½øÖÆ
+  39          #define   LED_SPEED_bit_1   GP03
+  40          #define   LED_SPEED_bit_2   GP02
+  41          #define   LED_SPEED_bit_3   GP01
+  42          #define   LED_SPEED_bit_4   GP00
+  43          #define   LED_SPEED_bit_5   GP37
+  44          #define   LED_SPEED_bit_6   GP36
+  45          
+  46          // Ô²°å
+  47          //#define KEY_ON                GP06          // ¿ªÆô¶Ë
+  48          //#define KEY_LOCK              GP05          // Ëø¶¨¶Ë
+  49          
+  50          //#define KEY_SPEED             GP15          // ËÙ¶È°´¼ü
+  51          //#define KEY_HEAT              GP13          // ÈÈ¶È°´¼ü
+  52          //#define KEY_COOL              GP17          // Àä·ç°´¼ü
+  53          
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 2   
+
+  54          //#define LED_SPEED_1           GP00          // ·çËÙµÆ
+  55          //#define LED_SPEED_2           GP37
+  56          //#define LED_SPEED_3           GP36
+  57          
+  58          //#define LED_HEAT_1            GP03          // ÈÈÁ¿µÆ
+  59          //#define LED_HEAT_2            GP02
+  60          //#define LED_HEAT_3            GP01
+  61          
+  62          
+  63          #define HEAT_WIRE_H_ON        0//(GP11=0)          // ¸ßÈÈ¼ÓÈÈË¿Ê¹ÄÜ
+  64          #define HEAT_WIRE_L_ON        0//(GP10=0)          // µÍÈÈ¼ÓÈÈË¿Ê¹ÄÜ
+  65          #define HEAT_WIRE_H_OFF       1//(GP11=1)          // ¸ßÈÈ¼ÓÈÈË¿Ê¹ÄÜ
+  66          #define HEAT_WIRE_L_OFF       1//(GP10=1)          // µÍÈÈ¼ÓÈÈË¿Ê¹ÄÜ
+  67          
+  68          #define LED_SET_ON            0             // LEDÓÐÐ§ÁÁ
+  69          #define LED_SET_OFF           1             // LEDÎÞÐ§Ãð
+  70          
+  71          #define SPD_CMD_LV_MAX        63             // ×ªËÙ×î¸ßµ²
+  72          #define HEAT_CMD_LV_MAX       4             // ÎÂ¶È×î¸ßµ²
+  73          
+  74          #define START_SPD_CMD_LV      1             // Æô¶¯×ªËÙµ²ÉèÖÃ  1 2 3
+  75          #define START_HEAT_CMD_LV     1             // Æô¶¯ÎÂ¶Èµ²ÉèÖÃ  0 1 2 3 4
+  76          #define START_COOL_CMD_LV     0             // Æô¶¯Àä·çµ²ÉèÖÃ
+  77          
+  78          #define POWER_LV1             70            // 1µ²¹¦ÂÊ - W
+  79          #define POWER_LV2             80            // 2µ²¹¦ÂÊ - W
+  80          #define POWER_LV3             90            // 3µ²¹¦ÂÊ - W
+  81          
+  82          #define RPM_LV1               59000         // 1µ²×ªËÙ - RPM
+  83          #define RPM_LV2               85000         // 2µ²×ªËÙ - RPM
+  84          #define RPM_LV3               120000        // 3µ²×ªËÙ - RPM
+  85          
+  86          #define HEAT_DUTY_LV1         9              // 1µ²Õ¼¿Õ±È×î´óÖµ - n/5
+  87          #define HEAT_DUTY_LV2         13             // 2µ²Õ¼¿Õ±È×î´óÖµ - n/5
+  88          #define HEAT_DUTY_LV3         18             // 3µ²Õ¼¿Õ±È×î´óÖµ - n/5
+  89          #define HEAT_DUTY_LV4         18             // 3µ²Õ¼¿Õ±È×î´óÖµ - n/5
+  90          #define HEAT_DUTY_LV4_1       13             // 3µ²ÎÂ¶È1µµ·çËÙÕ¼¿Õ±È×î´óÖµ - n/5
+  91          
+  92          #define HEAT_TEMPER_LV1       100            // 1µ²¸ø¶¨ÈÈ·çÎÂ¶È - ÉãÊÏ¶È
+  93          #define HEAT_TEMPER_LV2       100            // 2µ²¸ø¶¨ÈÈ·çÎÂ¶È - ÉãÊÏ¶È
+  94          #define HEAT_TEMPER_LV3       100            // 3µ²¸ø¶¨ÈÈ·çÎÂ¶È - ÉãÊÏ¶È
+  95          #define HEAT_TEMPER_LV4       100            // 4µ²¸ø¶¨ÈÈ·çÎÂ¶È - ÉãÊÏ¶È
+  96          
+  97          #define HEAT_R_VAL_LV1        29.8255       // 1µ²¸ø¶¨ÈÈ·çÎÂ¶È¶ÔÓ¦²ÉÑùµç×èÖµ
+  98          #define HEAT_R_VAL_LV2        24.816        // 2µ²¸ø¶¨ÈÈ·çÎÂ¶È¶ÔÓ¦²ÉÑùµç×èÖµ
+  99          #define HEAT_R_VAL_LV3        17.4087       // 3µ²¸ø¶¨ÈÈ·çÎÂ¶È¶ÔÓ¦²ÉÑùµç×èÖµ
+ 100          #define HEAT_R_VAL_LV4        17.4087       // 4µ²¸ø¶¨ÈÈ·çÎÂ¶È - ÉãÊÏ¶È
+ 101          
+ 102          #define THRYRST_ENABLE        1             //  0:½ûÖ¹ 1:Ê¹ÄÜ  ÊÇ·ñ¿ØÖÆ¾§Õ¢¹Ü
+ 103          #define CHECK_HEATER_TEMPER   1             //  0:½ûÖ¹ 1:Ê¹ÄÜ  ÊÇ·ñ¼ì²âµçÈÈË¿ÎÂ¶ÈÊÇ·ñ
+ 104          
+ 105          #define SPEED_LV1             _Q15(RPM_LV1 / MOTOR_SPEED_BASE)
+ 106          #define SPEED_LV2             _Q15(RPM_LV2 / MOTOR_SPEED_BASE)
+ 107          #define SPEED_LV3             _Q15(RPM_LV3 / MOTOR_SPEED_BASE)
+ 108          #define SPEED_LV_ADD          _Q15(1000 / MOTOR_SPEED_BASE)       // xjc¼ÓÒ»¸öµ²Î» ËÙ¶È¼Ó1000
+ 109          
+ 110          #define HEAT_ADC_VAL_LV1      HEAT_CELSIUS_ADC(HEAT_R_VAL_LV1)    // 1µ²¸ø¶¨ÈÈ·çÎÂ¶È¶ÔÓ¦²ÉÑùµç×èÖµ
+ 111          #define HEAT_ADC_VAL_LV2      HEAT_CELSIUS_ADC(HEAT_R_VAL_LV2)    // 2µ²¸ø¶¨ÈÈ·çÎÂ¶È¶ÔÓ¦²ÉÑùµç×èÖµ
+ 112          #define HEAT_ADC_VAL_LV3      HEAT_CELSIUS_ADC(HEAT_R_VAL_LV3)    // 3µ²¸ø¶¨ÈÈ·çÎÂ¶È¶ÔÓ¦²ÉÑùµç×èÖµ
+ 113          #define HEAT_ADC_VAL_LV4      HEAT_CELSIUS_ADC(HEAT_R_VAL_LV4)    // 3µ²¸ø¶¨ÈÈ·çÎÂ¶È¶ÔÓ¦²ÉÑùµç×èÖµ
+ 114          
+ 115          #define POWER_DUTY_LV1        CAL_POWER_Q12(POWER_LV1)
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 3   
+
+ 116          #define POWER_DUTY_LV2        CAL_POWER_Q12(POWER_LV2)
+ 117          #define POWER_DUTY_LV3        CAL_POWER_Q12(POWER_LV3)
+ 118          
+ 119          #define POWER_UXI_SMP_LV1     (u32)POWER_TO_SMP(POWER_LV1)//*0.9
+ 120          #define POWER_UXI_SMP_LV2     (u32)POWER_TO_SMP(POWER_LV2)//*0.93
+ 121          #define POWER_UXI_SMP_LV3     (u32)POWER_TO_SMP(POWER_LV3)//*0.95
+ 122          
+ 123          //============================================================================//
+ 124          
+ 125          extern u16 PwrOnX1ms;
+ 126          extern u8  Loop1msCnt;
+ 127          extern u8  QuickStartFlag;
+ 128          extern u16 UBusX10;
+ 129          extern u16 RunningX1ms;
+ 130          extern u16 IBusFilt_mA;
+ 131          extern u16 IBusCommand_mA;
+ 132          extern u16 IBusSmp;
+ 133          extern u8  KeyOnOffCmd;
+ 134          extern u8  KeyOnOffTrig;
+ 135          extern u16 KeyGoDuty;
+ 136          extern u16 KeyGoDutyMax;
+ 137          extern u32 idata UxISmp;
+ 138          extern u32 idata VspPwrCmd;
+ 139          extern s16 idata VspSpdAlt;
+ 140          extern s16 idata VspSpdCmd;
+ 141          extern s16 idata VspSpdCmdMax;
+ 142          extern u8  idata AlarmFlag;                // ±¨¾¯Öµ
+ 143          extern u8  idata AlarmFlag2;
+ 144          
+ 145          struct KeyType{
+ 146            u8  Old       :1;     // ²ÉÑù¾ÉÖµ
+ 147            u8  New       :1;     // ²ÉÑùÐÂÖµ
+ 148            u8  Filt      :1;     // ²ÉÑùÂË²¨Öµ
+ 149            u8  Lv        :1;     // ¶Ë¿ÚµçÆ½
+ 150            u8  PreLv     :1;     // ¶Ë¿ÚµçÆ½¾ÉÖµ
+ 151            u8  Rise      :1;     // ÉÏÉýÑØ
+ 152            u8  Fall      :1;     // ÏÂ½µÑØ
+ 153          };
+ 154          
+ 155          struct KeyType KeySpeed;              // 
+ 156          struct KeyType KeyHeat;               // 
+ 157          struct KeyType KeyCool;               // 
+ 158          struct KeyType KeyOnOff;
+ 159          
+ 160          u8  KeyPro1msTmr;                     // 
+ 161          
+ 162          u8  PwrOnStage;                       // 
+ 163          u8  HeatDisableFlag;                  // 
+ 164          
+ 165          u16 idata HeatTemperADCVal;
+ 166          s16 idata HeatTemperCelsius;
+ 167          
+ 168          u8  idata KeyOnLockLv;                // ÈýÌ¬Ö¸Áî: 0£º¹Ø±Õ£»1£ºÊÜ¿Ø£»2£ºËø¶¨
+ 169          u8  idata KeyOnLockLvPre;             // ÈýÌ¬Ö¸ÁîÉÏÒ»´ÎÖµ
+ 170          u8  idata KeyOnLockSmpNew;            // ¶Ë¿Ú²ÉÑù
+ 171          u8  idata KeyOnLockSmpOld;
+ 172          u8  idata KeyOnLockKeepCnt;
+ 173          
+ 174          u8  idata SpeedShiftStep;           // ËÙ¶Èµ²Êµ¼ÊÖµ 1-4 ÆäÖÐ
+ 175          u8  idata SpeedCmdLv;               // ËÙ¶Èµ²ÃüÁîÖµ
+ 176          
+ 177          u8  idata HeatShiftStep;            // 
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 4   
+
+ 178          u8  idata HeatCmdLv;                // 
+ 179          
+ 180          u8  idata CoolCmdLv;                // Àä·çÃüÁî
+ 181          u8  idata CoolShiftLv;              // 
+ 182          
+ 183          u8  idata ACCrossForThryrist;       // ¾§Õ¢¹Ü¿ØÖÆ²Î¿¼µÄ½»Á÷¹ýÁã±êÖ¾
+ 184          
+ 185          u8  idata RePowerRunTrig;           // ÖØÐÂÉÏµçºóµÄÆô¶¯´¥·¢
+ 186          
+ 187          u8  idata HeatDutyH;                // ÉÏ·¢ÈÈË¿¼ÓÈÈÁ¿¸ø¶¨
+ 188          u8  idata HeatDutyL;                // ÏÂ·¢ÈÈË¿¼ÓÈÈÁ¿¸ø¶¨
+ 189          u8  idata HeatDutyMax;              // ¼ÓÈÈÁ¿¸÷µ²Î»¶ÔÓ¦µÄÏÞÖÆÖµ
+ 190          u8  idata HeatDutyAlt;              // ¼ÓÈÈÁ¿µ÷½ÚÖµ
+ 191          u8  idata HeatDutyAltTop;           // ¼ÓÈÈÁ¿µ÷½ÚÖµÉÏÏÞ
+ 192          
+ 193          u8  idata HeatDutyPeriod;           // ¼ÓÈÈ´¦ÀíÖÜÆÚ
+ 194          u8  idata HeatDutyOnCnt;            // ¼ÓÈÈÓÐÐ§Ê±¶Î
+ 195          u8  idata HeatDutyOnCnt2;           // ¼ÓÈÈÓÐÐ§Ê±¶Î
+ 196          
+ 197          u8  idata ThryristTrigKeepCnt;      // ¾§Õ¢¹Ü´¥·¢±£³ÖÊ±³¤ -ºÁÃë
+ 198          u8  idata ThryristTrigKeepCnt2;     // ¾§Õ¢¹Ü´¥·¢±£³ÖÊ±³¤ -ºÁÃë
+ 199          
+ 200          s8  idata WindTemperRef;            // ÈÈ·ç¸ø¶¨Öµ ÉãÊÏ¶È
+ 201          s16 idata HeatAdcValRef;            // ÈÈ·ç¸ø¶¨Öµ ADC×ª»»Öµ
+ 202          u16 idata LedAltX10ms;
+ 203          
+ 204          bit WindTemperHigh;                 // µçÈÈË¿¹ýÈÈ±êÖ¾
+ 205          bit LedHeat1;
+ 206          bit LedHeat2;
+ 207          bit LedHeat3;
+ 208          bit LedSpd1;
+ 209          bit LedSpd2;
+ 210          bit LedSpd3;
+ 211          
+ 212          u8  idata KeySpeedActX10ms;         // ÓÐÐ§×´Ì¬±£³Ö¼ÆÊ± ¡Á 10ms
+ 213          u16 idata ReverseCleanX10ms;        // ·´×ªÇå½àÊ±³¤
+ 214          
+ 215          bit ReverseCleanTrig;
+ 216          bit ReverseCleanCmd;
+ 217          bit Heat_wire_H = 1;
+ 218          bit Heat_wire_L = 1;
+ 219          
+ 220          u8  HeatRegulTmr;
+ 221          u8  WindTemperDelta;                // ÈÈ·ç¸ø¶¨ÓëÊµ²â²îÖµ
+ 222          u16 idata HeatLv4X10ms;             // ÈÈ·ç4µ²¼ÆÊ±
+ 223          
+ 224          u8  LedAlarmFlashCnt;               //´íÎóÖ¸Ê¾µÆÉÁË¸¼ÆÊý
+ 225          
+ 226          extern u8  HearterPMWDutyRise;
+ 227          extern u8  HearterPMWDutyDowm;
+ 228          
+ 229          u8  PowerVoltDownBase;
+ 230          u8  PowerVoltRiseBase;                   //Òò²»Í¬µµÎ»Õ¼¿Õ±È²»Í¬£¬ÏàÍ¬µçÑ¹²î¶ÔÓ¦µÄ¹¦ÂÊ²î²»Í¬
+ 231          
+ 232          //u8  idata HeatLowDuty=0;          // ¼ÓÈÈÁ¿¸ø¶¨
+ 233          //u8  idata HeatLowDutyMax=0;       // ¼ÓÈÈÁ¿×î´óÖµ
+ 234          //u8  idata KeySpeedLvStayCnt=0;    // µ±Ç°µçÆ½±£³Ö¼ÆÊý
+ 235          
+ 236          //u8  idata KeyHeatLvStayCnt=0;
+ 237          //u8  idata KeyHeatActX10ms=0;
+ 238          //u8  idata KeyCoolLvStayCnt=0;
+ 239          //u8  idata KeyCoolLvX10ms=0;
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 5   
+
+ 240          //u8  idata KeyMt2LvStayCnt;
+ 241          //u8  idata KeyMt2LvX10ms;
+ 242          //u8  idata VZeroCrossLose;
+ 243          //u8  idata VZeroCrossReturn;
+ 244          //============================================================================//
+ 245          //----------------------------------------------------------------------------//
+ 246          // ËµÃ÷£ºËÙ¶Èµ²Î»°´¼ü¼ÆÊýÎª1-2-3-4-1-2...Ñ­»·£¬¶ÔÓ¦µ²Î»±ä»¯Ë³ÐòÎª1-2-3-2-1-2...Ñ­»·¼ÆÊý
+ 247          void CalSpeedStepToCmd(void)
+ 248          {
+ 249   1        // 1  2  3  4  1
+ 250   1        // 1  2  3  2  1
+ 251   1        
+ 252   1        if((SpeedShiftStep == 0)||(SpeedShiftStep >= (2*SPD_CMD_LV_MAX-1)))     // A-0  B-1  C-2  D-3  E-2  F-1 
+             - G-2
+ 253   1          SpeedShiftStep = 1;
+ 254   1          
+ 255   1        if(SpeedShiftStep <= SPD_CMD_LV_MAX)
+ 256   1          SpeedCmdLv = SpeedShiftStep;
+ 257   1        else
+ 258   1          SpeedCmdLv = (2*SPD_CMD_LV_MAX) - SpeedShiftStep;
+ 259   1      }
+ 260          //----------------------------------------------------------------------------//
+ 261          // ËµÃ÷£ºÎÂ¶Èµ²Î»°´¼ü¼ÆÊýÎª0-1-2-3-4-5-0-1-2...Ñ­»·£¬¶ÔÓ¦µ²Î»±ä»¯Ë³ÐòÎª0-1-2-3-2-1-0-1-2...Ñ­»·¼ÆÊý
+ 262          void CalHeatStepToCmd(void)
+ 263          {
+ 264   1        // 0  1  2  3  4  5  6  7  0
+ 265   1        // 0  1  2  3  4  3  2  1  0
+ 266   1        
+ 267   1        // ÈÈ·çÓÐ0µ²ÐèÇó
+ 268   1        if(HeatShiftStep >= (2*HEAT_CMD_LV_MAX))      // A-0  B-1  C-2  D-3  E-4  F-3  G-2  H-1  I-0 
+ 269   1          HeatShiftStep = 0;
+ 270   1        
+ 271   1        // ÈÈ·çÎÞ0µ²ÐèÇó
+ 272   1      //  if((HeatShiftStep == 0)||(HeatShiftStep >= (2*HEAT_CMD_LV_MAX-1)))      // A-0  B-1  C-2  D-3  E-2  F-
+             -1  G-2
+ 273   1      //    HeatShiftStep = 1;
+ 274   1        
+ 275   1        if(HeatShiftStep <= HEAT_CMD_LV_MAX)
+ 276   1          HeatCmdLv = HeatShiftStep;
+ 277   1        else
+ 278   1          HeatCmdLv = (2*HEAT_CMD_LV_MAX) - HeatShiftStep;
+ 279   1      }
+ 280          //----------------------------------------------------------------------------//
+ 281          // ËµÃ÷£º
+ 282          void CalCoolLvToCmd(void)
+ 283          {
+ 284   1        CoolCmdLv = CoolShiftLv;
+ 285   1      }
+ 286          //----------------------------------------------------------------------------//
+ 287          // ËµÃ÷£º¿ª¹Ø³õÊ¼»¯£¬×ªËÙµ²£¬ÎÂ¶Èµ²£¬Àä·çµ²£¬³õÊ¼Öµ¸ø¶¨
+ 288          void DryerKeysDefault(void)
+ 289          {
+ 290   1        SpeedShiftStep = START_SPD_CMD_LV;            // ×ªËÙ
+ 291   1        HeatShiftStep = START_HEAT_CMD_LV;            // ÎÂ¶È
+ 292   1        CoolShiftLv = START_COOL_CMD_LV;              // Àä·ç
+ 293   1      }
+ 294          //----------------------------------------------------------------------------//
+ 295          // ËµÃ÷£º¿ª¹Ø³õÊ¼»¯£¬×ªËÙµ²£¬ÎÂ¶Èµ²£¬Àä·çµ²£¬³õÊ¼Öµ¸ø¶¨
+ 296          //void KeysInitial(void)
+ 297          //{
+ 298          //  SpeedShiftStep = SpeedSavedStep = START_SPD_CMD_LV;   // ×ªËÙ
+ 299          //  HeatShiftStep = HeatSavedStep = START_HEAT_CMD_LV;    // ÎÂ¶È
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 6   
+
+ 300          //  CoolShiftLv = CoolSavedLv = START_COOL_CMD_LV;        // Àä·ç
+ 301          
+ 302          //  CalSpeedStepToCmd();
+ 303          //  CalHeatStepToCmd();
+ 304          //  CalCoolLvToCmd();
+ 305          //}
+ 306          //----------------------------------------------------------------------------//
+ 307          // ËµÃ÷£º´µ·ç»ú°´¼ü¿ØÖÆ
+ 308          void DryerPer1ms(void)
+ 309          {
+ 310   1        
+ 311   1        KeyPro1msTmr = Loop1msCnt;   // Óë LoopProPer1ms() ¼ÆÊýÒ»ÖÂ
+ 312   1        
+ 313   1        // ·ÖÊ±´¦Àí
+ 314   1        if(KeyPro1msTmr == 2)
+ 315   1        {
+ 316   2          // ¶ÁÈ¡×Ü¿ª¹Ø×´Ì¬
+ 317   2      
+ 318   2          // ¨‹--------------------------------------¨‹ //
+ 319   2          // 1. ÎÞ¿ª¹Ø£¬ÉÏµçÔËÐÐ
+ 320   2          //
+ 321   2          KeyOnLockLv = 1;
+ 322   2          
+ 323   2          // ¡ø--------------------------------------¡ø //
+ 324   2           
+ 325   2          // ¨‹--------------------------------------¨‹ //
+ 326   2          // 2. ÈýÌ¬¿ª¹Ø´¦Àí£¬¹Ø±Õ¡¢ÔËÐÐ¡¢Ëø¶¨
+ 327   2      
+ 328   2      //    KeyOnLockSmpOld = KeyOnLockSmpNew;        // ±£ÁôÉÏ´Î²ÉÑùÖµ
+ 329   2      //    KeyOnLockLvPre = KeyOnLockLv;             // ±£ÁôÉÏ´ÎÂË²¨½á¹û
+ 330   2      //    
+ 331   2      //    KeyOnLockSmpNew = KEY_ON;                 // Ê¹ÄÜ¶Ë¿Ú
+ 332   2      //    
+ 333   2      //    if(KEY_LOCK == 1)                         // Ëø¶¨¶Ë¿Ú
+ 334   2      //      KeyOnLockSmpNew += 2;
+ 335   2      //    
+ 336   2      //    if(KeyOnLockSmpOld == KeyOnLockSmpNew)    // ¶à´Î¼ÆÊý£¬ÂË²¨´¦Àí
+ 337   2      //    {
+ 338   2      //      if(++KeyOnLockKeepCnt >= 3)
+ 339   2      //      {
+ 340   2      //        KeyOnLockKeepCnt = 3;
+ 341   2      //        KeyOnLockLv = 3 - KeyOnLockSmpNew;
+ 342   2      //      }
+ 343   2      //    }
+ 344   2      //    
+ 345   2      //    if(KeyOnLockLv > 2)                        // »ñµÃÊ¹ÄÜËø¶¨Öµ
+ 346   2      //      KeyOnLockLv = 0;
+ 347   2      //    
+ 348   2      ////    // ¨Œ---------------------------------------- //
+ 349   2      ////    // ÊÇ·ñÓÐ³¤°´·´×ªÒªÇó
+ 350   2      ////    // a. ÎÞ
+ 351   2      //    if(KeyOnLockLv == 0)                       // ¹Ø±ÕÌ¬È·±£ÎÞÊä³ö£¬
+ 352   2      //    {
+ 353   2      //      if(ReverseCleanTrig == 1)
+ 354   2      //      {
+ 355   2      //        ReverseCleanTrig = 0;
+ 356   2      //        ReverseCleanCmd = 1;
+ 357   2      //        ReverseCleanX10ms = 500;
+ 358   2      //        
+ 359   2      //        KeyOnOffCmd = 1;
+ 360   2      //        KeyOnOffTrig = 1;
+ 361   2      //      }
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 7   
+
+ 362   2      //        
+ 363   2      //      if(ReverseCleanX10ms > 0)
+ 364   2      //        ReverseCleanX10ms--;
+ 365   2      //      else
+ 366   2      //      {
+ 367   2      //        ReverseCleanCmd = 0;
+ 368   2      //        KeyOnOffCmd = 0;
+ 369   2      //      }
+ 370   2      //    }
+ 371   2      //    else
+ 372   2      //    {
+ 373   2      //      if(KeyOnLockLvPre == 0)                  // µ±¿ª¹Ø×´Ì¬ÍÑÀë¹Ø±ÕÌ¬£¬Á¢¼´ÔËÐÐ
+ 374   2      //      {
+ 375   2      //        KeyOnOffCmd = 1;
+ 376   2      //        KeyOnOffTrig = 1;
+ 377   2      //      }
+ 378   2      //    }
+ 379   2      //    // b. ÓÐ
+ 380   2      ////    if(KeyOnLockLv == 0)                       // ¹Ø±ÕÌ¬È·±£ÎÞÊä³ö£¬
+ 381   2      ////    {
+ 382   2      ////      KeyOnOffCmd = 0;
+ 383   2      ////    }
+ 384   2      ////    else
+ 385   2      ////    {
+ 386   2      ////      if(KeyOnLockLvPre == 0)                  // µ±¿ª¹Ø×´Ì¬ÍÑÀë¹Ø±ÕÌ¬£¬Á¢¼´ÔËÐÐ
+ 387   2      ////      {
+ 388   2      ////        KeyOnOffCmd = 1;
+ 389   2      ////        KeyOnOffTrig = 1;
+ 390   2      ////      }
+ 391   2      ////    }
+ 392   2      //    // a.b. ½áÊø
+ 393   2          // ----------------------------------------¡÷ //
+ 394   2      
+ 395   2          // ¡ø--------------------------------------¡ø //
+ 396   2      
+ 397   2          // ¨‹--------------------------------------¨‹ //
+ 398   2          // 3. ÆôÍ£´¥Åö°´Å¥¿ØÖÆ
+ 399   2      
+ 400   2      //    KeyOnOff.New = KEY_ONOFF;//1;//
+ 401   2      //    
+ 402   2      //    if(KeyOnOff.New == KeyOnOff.Old)
+ 403   2      //      KeyOnOff.Filt = KeyOnOff.New;
+ 404   2      //    else
+ 405   2      //      KeyOnOff.Old = KeyOnOff.New;
+ 406   2      //    
+ 407   2      //    // »ñµÃµ÷ËÙ¶Ë¿Ú×´Ì¬
+ 408   2      //    KeyOnOff.Rise = 0;                  // Çå³ýÉÏÌø±äÑØ
+ 409   2      //    KeyOnOff.Fall = 0;                  // Çå³ýÏÂÌø±äÑØ
+ 410   2      //    KeyOnOff.PreLv = KeyOnOff.Lv;       // ±£´æÉÏ´ÎÖµ
+ 411   2      //    KeyOnOff.Lv = KeyOnOff.Filt;        // ¶ÁÈ¡±¾´ÎÖµ
+ 412   2      
+ 413   2      //    if(KeyOnOff.Lv != KeyOnOff.PreLv)   // Èç±¾´Î²»Í¬ÓÚÉÏ´Î£¬ÅÐ¶ÏÊÇºÎÖÖÌø±ä
+ 414   2      //    {
+ 415   2      //      if(KeyOnOff.Lv == 1)              // ±¾´ÎÎª¸ß
+ 416   2      //        KeyOnOff.Rise = 1;              // ÉÏÉýÑØÖÃÎ»
+ 417   2      //      else                              // ·ñÔòÎªÏÂ½µÑØ
+ 418   2      //        KeyOnOff.Fall = 1;
+ 419   2      //    }
+ 420   2      //    
+ 421   2      //    if(KeyOnOff.Fall == 1)              // KeyOnOff.Rise
+ 422   2      //    {
+ 423   2      //      KeyOnOff.Fall = 0;
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 8   
+
+ 424   2      //      
+ 425   2      //      if(KeyOnOffCmd == 0)
+ 426   2      //      {
+ 427   2      //        KeyOnOffCmd = 1;
+ 428   2      //        KeyOnLockLv = 1;
+ 429   2      //        KeyOnOffTrig = 1;
+ 430   2      //      }
+ 431   2      //      else
+ 432   2      //      {
+ 433   2      ////        if(KeyOnLockLv == 1)
+ 434   2      ////          KeyOnLockLv = 2;
+ 435   2      ////        else
+ 436   2      //        {
+ 437   2      //          KeyOnOffCmd = 0;
+ 438   2      //          KeyOnLockLv = 0;
+ 439   2      //        }
+ 440   2      //      }
+ 441   2      //    }
+ 442   2      
+ 443   2          // ¡ø--------------------------------------¡ø //
+ 444   2          
+ 445   2          if(RePowerRunTrig == 1)
+ 446   2          {
+ 447   3            if(KeyOnLockLv > 0)
+ 448   3            {
+ 449   4              KeyOnOffCmd = 1;
+ 450   4              KeyOnOffTrig = 1;
+ 451   4            }
+ 452   3            
+ 453   3            RePowerRunTrig = 0;
+ 454   3          }
+ 455   2          
+ 456   2          if(KeyOnOffCmd == 0)
+ 457   2            KeyGoDuty = 0;
+ 458   2          
+ 459   2        }
+ 460   1        else if(KeyPro1msTmr == 3)
+ 461   1        {
+ 462   2          // ×Ü¿ª¹ØÓÐÐ§Ê±£¬¼ì²â¸÷°´Å¥
+ 463   2          {
+ 464   3            KeySpeed.New = KEY_SPEED;
+ 465   3            // Á¬ÐøÁ½´Î¼ì²âÎªÍ¬Ò»Öµ£¬È·ÈÏµ±Ç°Öµ
+ 466   3            if(KeySpeed.New == KeySpeed.Old)
+ 467   3              KeySpeed.Filt = KeySpeed.New;
+ 468   3            else
+ 469   3              KeySpeed.Old = KeySpeed.New;
+ 470   3            
+ 471   3            KeyHeat.New = KEY_HEAT;
+ 472   3            if(KeyHeat.New == KeyHeat.Old)
+ 473   3              KeyHeat.Filt = KeyHeat.New;
+ 474   3            else
+ 475   3              KeyHeat.Old = KeyHeat.New;
+ 476   3            
+ 477   3            KeyCool.New = KEY_COOL;
+ 478   3            if(KeyCool.New == KeyCool.Old)
+ 479   3              KeyCool.Filt = KeyCool.New;
+ 480   3            else
+ 481   3              KeyCool.Old = KeyCool.New;
+ 482   3            
+ 483   3            // »ñµÃµ÷ËÙ¶Ë¿Ú×´Ì¬
+ 484   3            KeySpeed.Rise = 0;                  // Çå³ýÉÏÌø±äÑØ
+ 485   3            KeySpeed.Fall = 0;                  // Çå³ýÏÂÌø±äÑØ
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 9   
+
+ 486   3            KeySpeed.PreLv = KeySpeed.Lv;       // ±£´æÉÏ´ÎÖµ
+ 487   3            KeySpeed.Lv = KeySpeed.Filt;        // ¶ÁÈ¡±¾´ÎÖµ
+ 488   3             
+ 489   3            if(KeySpeed.Lv != KeySpeed.PreLv)   // Èç±¾´Î²»Í¬ÓÚÉÏ´Î£¬ÅÐ¶ÏÊÇºÎÖÖÌø±ä
+ 490   3            {
+ 491   4              if(KeySpeed.Lv == 1)              // ±¾´ÎÎª¸ß
+ 492   4                KeySpeed.Rise = 1;              // ÉÏÉýÑØÖÃÎ»
+ 493   4              else                              // ·ñÔòÎªÏÂ½µÑØ
+ 494   4              KeySpeed.Fall = 1;
+ 495   4            }
+ 496   3            
+ 497   3            // »ñµÃ¼ÓÈÈ¶Ë¿Ú×´Ì¬
+ 498   3            KeyHeat.Rise = 0;                 // Çå³ýÉÏÌø±äÑØ
+ 499   3            KeyHeat.Fall = 0;                 // Çå³ýÏÂÌø±äÑØ
+ 500   3            KeyHeat.PreLv = KeyHeat.Lv;       // ±£´æÉÏ´ÎÖµ
+ 501   3            KeyHeat.Lv = KeyHeat.Filt;
+ 502   3          
+ 503   3            if(KeyHeat.Lv != KeyHeat.PreLv)   // Èç±¾´Î²»Í¬ÓÚÉÏ´Î£¬ÅÐ¶ÏÊÇºÎÖÖÌø±ä
+ 504   3            {
+ 505   4              if(KeyHeat.Lv == 1)             // ±¾´ÎÎª¸ß
+ 506   4                KeyHeat.Rise = 1;             // ÉÏÉýÑØÖÃÎ»
+ 507   4              else                            // ·ñÔòÎªÏÂ½µÑØ
+ 508   4              KeyHeat.Fall = 1;
+ 509   4            }
+ 510   3            
+ 511   3            // »ñµÃÀä·ç¶Ë¿Ú×´Ì¬
+ 512   3            KeyCool.Rise = 0;                 // Çå³ýÉÏÌø±äÑØ
+ 513   3            KeyCool.Fall = 0;                 // Çå³ýÏÂÌø±äÑØ
+ 514   3            KeyCool.PreLv = KeyCool.Lv;       // ±£´æÉÏ´ÎÖµ
+ 515   3          
+ 516   3            KeyCool.Lv = KeyCool.Filt;
+ 517   3      
+ 518   3            if(KeyCool.Lv != KeyCool.PreLv)   // Èç±¾´Î²»Í¬ÓÚÉÏ´Î£¬ÅÐ¶ÏÊÇºÎÖÖÌø±ä
+ 519   3            {
+ 520   4              if(KeyCool.Lv == 1)             // ±¾´ÎÎª¸ß
+ 521   4                KeyCool.Rise = 1;             // ÉÏÉýÑØÖÃÎ»
+ 522   4              else                            // ·ñÔòÎªÏÂ½µÑØ
+ 523   4              KeyCool.Fall = 1;
+ 524   4            }
+ 525   3      
+ 526   3            // ÓÐÐ§×´Ì¬¼ÆÊ±
+ 527   3            if(KeySpeed.Lv == 0)
+ 528   3            {
+ 529   4              if(++KeySpeedActX10ms == 100)
+ 530   4                ReverseCleanTrig = 1;
+ 531   4              else if(KeySpeedActX10ms >= 101)
+ 532   4                KeySpeedActX10ms = 101;
+ 533   4            }
+ 534   3            else
+ 535   3              KeySpeedActX10ms = 0;
+ 536   3      
+ 537   3          }
+ 538   2        }
+ 539   1        else if(KeyPro1msTmr == 4)
+ 540   1        {
+ 541   2          if(KeyOnOffCmd == 1)       // ¿ªÆôÊ±¸÷°´¼üÓÐÐ§
+ 542   2          {
+ 543   3      
+ 544   3            // 
+ 545   3            if(KeyOnLockLv != 0)     // Ò»¼üÀä·ç²»¿¼ÂÇËø¶¨Ì¬
+ 546   3            {
+ 547   4              // ¨‹--------------------------------------¨‹ //
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 10  
+
+ 548   4              // 1. Àä·ç°´¼ü´¦Àí,°´ÏÂÇÐ»»ÊÇ·ñÀä·ç
+ 549   4      //        if(KeyCool.Fall == 1)
+ 550   4      //        {
+ 551   4      //          KeyCool.Fall = 0;
+ 552   4      //          
+ 553   4      //          if(CoolShiftLv == 0)
+ 554   4      //            CoolShiftLv = 1;
+ 555   4      //          else
+ 556   4      //            CoolShiftLv = 0;
+ 557   4      //          
+ 558   4      //          CoolCmdLv = CoolShiftLv;
+ 559   4      //        }
+ 560   4              // ¡ø--------------------------------------¡ø //
+ 561   4              
+ 562   4              // ¨‹--------------------------------------¨‹ //
+ 563   4              // 2. Àä·ç°´¼ü´¦Àí,Ö»ÔÚ°´ÏÂÊ±Àä·ç
+ 564   4              if(KeyCool.Lv == 0)
+ 565   4                CoolCmdLv = CoolShiftLv = 1;
+ 566   4              else
+ 567   4                CoolCmdLv = CoolShiftLv = 0;
+ 568   4              // ¡ø--------------------------------------¡ø //
+ 569   4            }
+ 570   3            
+ 571   3            if(KeyOnLockLv == 1)    // Ëø¶¨Ê±µ÷ËÙµ÷ÎÂÎÞÐ§
+ 572   3            {
+ 573   4              // µ÷ËÙ°´¼ü´¦Àí
+ 574   4              if(KeySpeed.Fall == 1)
+ 575   4              {
+ 576   5                KeySpeed.Fall = 0;
+ 577   5                
+ 578   5                SpeedShiftStep++;
+ 579   5                CalSpeedStepToCmd();
+ 580   5              }
+ 581   4              
+ 582   4              // 2µ²´¦Àí
+ 583   4      //        if(KeySpeed.Fall == 1)
+ 584   4      //        {
+ 585   4      //          KeySpeed.Fall = 0;
+ 586   4      //          
+ 587   4      //          SpeedShiftStep++;
+ 588   4      //          
+ 589   4      //          if(SpeedShiftStep >= 3)
+ 590   4      //            SpeedShiftStep = 1;
+ 591   4      
+ 592   4      //            SpeedCmdLv = SpeedShiftStep;
+ 593   4      //        }
+ 594   4              
+ 595   4              // ¼ÓÈÈ°´¼ü´¦Àí
+ 596   4              if(KeyHeat.Fall == 1)
+ 597   4              {
+ 598   5                KeyHeat.Fall = 0;
+ 599   5      
+ 600   5                // ¼ÓÈÈ°´¼üÈ¡ÏûÀä·ç×´Ì¬
+ 601   5                //if(CoolCmdLv == 1)
+ 602   5                //  CoolCmdLv = 0;
+ 603   5      
+ 604   5                if(CoolCmdLv == 0)          // µ±Ç°·ÇÀä·ç×´Ì¬£¬°´Å¥ÓÐÐ§
+ 605   5                {
+ 606   6                  HeatShiftStep++;
+ 607   6                  CalHeatStepToCmd();
+ 608   6                }
+ 609   5              }
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 11  
+
+ 610   4            }
+ 611   3          }
+ 612   2        }
+ 613   1        else if(KeyPro1msTmr == 5)
+ 614   1        {
+ 615   2          
+ 616   2          //xjc  1µµ·çËÙ Ò»´Î¼Óµµ·çËÙ¼Ó1000
+ 617   2      
+ 618   2            VspSpdCmd =   SPEED_LV1 + (SpeedCmdLv - 1)*(SPEED_LV_ADD);
+ 619   2            KeyGoDuty =   POWER_UXI_SMP_LV3;
+ 620   2          
+ 621   2      //    // ¸ù¾Ýµ²Î»¸ø¶¨ËÙ¶È
+ 622   2      //    if(SpeedCmdLv == 3)
+ 623   2      //    {
+ 624   2      //      VspSpdCmd = SPEED_LV3;
+ 625   2      //      KeyGoDuty = POWER_DUTY_LV3;
+ 626   2      //      //VspPwrCmd = POWER_UXI_SMP_LV3;
+ 627   2      //    }
+ 628   2      //    else if(SpeedCmdLv == 2)
+ 629   2      //    {
+ 630   2      //      VspSpdCmd = SPEED_LV2;
+ 631   2      //      KeyGoDuty = POWER_DUTY_LV2;
+ 632   2      //      //VspPwrCmd = POWER_UXI_SMP_LV2;
+ 633   2      //    }
+ 634   2      //    else // if(SpeedCmdLv == 1)
+ 635   2      //    {
+ 636   2      //      VspSpdCmd = SPEED_LV1;
+ 637   2      //      KeyGoDuty = POWER_DUTY_LV1;
+ 638   2      //      //VspPwrCmd = POWER_UXI_SMP_LV1;
+ 639   2      //    }
+ 640   2          
+ 641   2          if(ReverseCleanCmd == 1)
+ 642   2            VspSpdCmd = _Q15(60000 / MOTOR_SPEED_BASE);
+ 643   2          
+ 644   2          // ÏÞ×ªËÙ»òÏÞ¹¦ÂÊ
+ 645   2          #if (CONTROL_TARGET==CONTROL_TARGET_POWER)
+                  {
+                    // ÏÞ×ªËÙ
+                     if(mcFocCtrl.SpeedFlt > _Q15((GIVEN_MAX_RPM) / MOTOR_SPEED_BASE))
+                       KeyGoDutyMax -= 10;
+                     else if(mcFocCtrl.SpeedFlt < _Q15((GIVEN_MAX_RPM-1000) / MOTOR_SPEED_BASE))
+                       KeyGoDutyMax += 10;
+                    
+                     if(KeyGoDutyMax > _Q12(1.0))
+                       KeyGoDutyMax = _Q12(1.0);
+                     else if(KeyGoDutyMax < _Q12(0.15))
+                       KeyGoDutyMax = _Q12(0.15);
+                     
+                     if(KeyGoDuty > KeyGoDutyMax)
+                      KeyGoDuty = KeyGoDutyMax;
+                  }
+                  #elif (CONTROL_TARGET==CONTROL_TARGET_SPEED)
+ 662   2          {
+ 663   3            // ÏÞ¹¦ÂÊ£¬ÏÞµçÁ÷
+ 664   3            // ¸ø¶¨ÖÍ»ØÇø£¬ÔÚ¿É¿Ø×ªËÙ·¶Î§ÄÚ×öÏÞÖÆ
+ 665   3            if(IBusFilt_mA > (u16)(I_BUS_MAX*1000))               //365)//810)//       
+ 666   3              VspSpdCmdMax-=10;
+ 667   3            else if(IBusFilt_mA < (u16)((I_BUS_MAX-0.010)*1000))  //355)//800)//  
+ 668   3              VspSpdCmdMax+=10;
+ 669   3            
+ 670   3            if(VspSpdCmdMax > GIVEN_MAX_SPD)
+ 671   3              VspSpdCmdMax = GIVEN_MAX_SPD;
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 12  
+
+ 672   3            else if(VspSpdCmdMax < GIVEN_MIN_SPD)
+ 673   3              VspSpdCmdMax = GIVEN_MIN_SPD;
+ 674   3      
+ 675   3            if(VspSpdCmd > VspSpdCmdMax)
+ 676   3              VspSpdCmd = VspSpdCmdMax;
+ 677   3              
+ 678   3          }
+ 679   2          #endif
+ 680   2          
+ 681   2          if(KeyOnOffCmd == 0)
+ 682   2            KeyGoDuty = 0;
+ 683   2          
+ 684   2        }
+ 685   1        else if(KeyPro1msTmr == 6)
+ 686   1        {
+ 687   2          // ÊÇ·ñ¼ì²âµçÈÈË¿ÎÂ¶È¡£
+ 688   2      //    #if (CHECK_HEATER_TEMPER == 1)
+ 689   2      //    WindTemperNow = HeatTemperCelsius;    // ÈçÊÇ£¬¼ì²â¡£
+ 690   2      //    HeatAdcValNow = HeatTemperADCVal;
+ 691   2      //    #else
+ 692   2      //    WindTemperNow = 25;                   // Èç·ñ£¬¸ø¶¨µ±Ç°ÎÂ¶ÈÎª³£ÎÂÖµ¡£
+ 693   2      //    HeatAdcValNow = HEAT_CELSIUS_ADC(100.0);
+ 694   2      //    #endif
+ 695   2              
+ 696   2      
+ 697   2      //    if(mcState == mcRun)                // ½öÔÚµç»úÔËÐÐÊ±¿ªµçÈÈË¿
+ 698   2      //      HeatDisableFlag = 0;
+ 699   2      //    else
+ 700   2      //    
+ 701   2          
+ 702   2        
+ 703   2          // È·¶¨¸÷µ²Î»ÈÈ¶È×î¸ßµ÷½ÚÁ¿
+ 704   2      
+ 705   2          if((CoolCmdLv == 1)||(KeyOnOffCmd == 0)||(mcState != mcRun))
+ 706   2          {
+ 707   3            HeatDisableFlag = 1;
+ 708   3            HeatDutyMax = 0;
+ 709   3          }
+ 710   2          else
+ 711   2          {
+ 712   3            HeatDisableFlag = 0;
+ 713   3            // ²»Í¬µ²Î»¶ÔÓ¦µÄµçÈÈÕ¼¿Õ±ÈºÍÎÂ¶ÈÖµ
+ 714   3            if(HeatCmdLv == 4)
+ 715   3            {
+ 716   4              if(SpeedCmdLv == 1)
+ 717   4              {
+ 718   5                PowerVoltRiseBase = 25;
+ 719   5                PowerVoltDownBase = 120;
+ 720   5                HeatDutyMax = HEAT_DUTY_LV1 + 1; 
+ 721   5              }
+ 722   4              else if(SpeedCmdLv == 2)
+ 723   4              {
+ 724   5                PowerVoltRiseBase = 22;
+ 725   5                PowerVoltDownBase = 70;
+ 726   5                HeatDutyMax = HEAT_DUTY_LV2;
+ 727   5              }
+ 728   4              else
+ 729   4              {
+ 730   5                PowerVoltRiseBase = 25;
+ 731   5                PowerVoltDownBase = 55;
+ 732   5                HeatDutyMax = HEAT_DUTY_LV3;
+ 733   5              }
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 13  
+
+ 734   4              WindTemperRef = HEAT_TEMPER_LV4;
+ 735   4              HeatAdcValRef = HEAT_ADC_VAL_LV4;
+ 736   4              
+ 737   4            }
+ 738   3            else if(HeatCmdLv == 3)
+ 739   3            {
+ 740   4                WindTemperRef = HEAT_TEMPER_LV3;
+ 741   4                HeatAdcValRef = HEAT_ADC_VAL_LV3;
+ 742   4              if(SpeedCmdLv == 1)
+ 743   4              {
+ 744   5                PowerVoltRiseBase = 22;
+ 745   5                PowerVoltDownBase = 60;
+ 746   5                WindTemperRef = HEAT_TEMPER_LV3 - 2; 
+ 747   5                HeatDutyMax = HEAT_DUTY_LV3 - 2;
+ 748   5              }
+ 749   4              else if(SpeedCmdLv == 2)
+ 750   4              {
+ 751   5                HeatDutyMax = HEAT_DUTY_LV3 - 1;
+ 752   5                PowerVoltRiseBase = 25;
+ 753   5                PowerVoltDownBase = 55;
+ 754   5              }
+ 755   4              else
+ 756   4              {
+ 757   5                HeatDutyMax = HEAT_DUTY_LV3;
+ 758   5                PowerVoltRiseBase = 25;
+ 759   5                PowerVoltDownBase = 55;
+ 760   5              }   
+ 761   4            }
+ 762   3            else if(HeatCmdLv == 2)
+ 763   3            {
+ 764   4             if(SpeedCmdLv == 1)
+ 765   4             {
+ 766   5               PowerVoltRiseBase = 35;
+ 767   5               PowerVoltDownBase = 100;
+ 768   5               WindTemperRef = HEAT_TEMPER_LV2 - 2; 
+ 769   5               HeatDutyMax = HEAT_DUTY_LV2 - 3;
+ 770   5             }
+ 771   4             else if(SpeedCmdLv == 2)
+ 772   4             {
+ 773   5              PowerVoltRiseBase = 25;
+ 774   5              PowerVoltDownBase = 80;
+ 775   5              HeatDutyMax = HEAT_DUTY_LV2 - 1;
+ 776   5              WindTemperRef = HEAT_TEMPER_LV2;
+ 777   5              HeatAdcValRef = HEAT_ADC_VAL_LV2;
+ 778   5             }
+ 779   4             else
+ 780   4             {
+ 781   5              PowerVoltRiseBase = 22;
+ 782   5              PowerVoltDownBase = 70;
+ 783   5              HeatDutyMax = HEAT_DUTY_LV2;
+ 784   5              WindTemperRef = HEAT_TEMPER_LV2;
+ 785   5              HeatAdcValRef = HEAT_ADC_VAL_LV2;
+ 786   5             }
+ 787   4            }
+ 788   3            else if(HeatCmdLv == 1)
+ 789   3            {
+ 790   4              if(SpeedCmdLv == 1)
+ 791   4             {
+ 792   5              PowerVoltRiseBase = 45;
+ 793   5              PowerVoltDownBase = 120;
+ 794   5              HeatDutyMax = HEAT_DUTY_LV1 - 2;
+ 795   5              WindTemperRef = HEAT_TEMPER_LV1;
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 14  
+
+ 796   5              HeatAdcValRef = HEAT_ADC_VAL_LV1;
+ 797   5             }
+ 798   4              else if(SpeedCmdLv == 2)
+ 799   4             {
+ 800   5               PowerVoltRiseBase = 45;
+ 801   5               PowerVoltDownBase = 120;
+ 802   5               HeatDutyMax = HEAT_DUTY_LV1 - 1;
+ 803   5             }
+ 804   4             else
+ 805   4             {
+ 806   5              PowerVoltRiseBase = 40;
+ 807   5              PowerVoltDownBase = 120;
+ 808   5              HeatDutyMax = HEAT_DUTY_LV1;
+ 809   5             }
+ 810   4            }
+ 811   3            else
+ 812   3            {
+ 813   4              HeatDutyMax = 0;
+ 814   4              WindTemperRef = 10;
+ 815   4              HeatAdcValRef = 4096;
+ 816   4            }
+ 817   3          }
+ 818   2          
+ 819   2          // Á½ÖÖµçÈÈË¿¿ØÖÆ·½Ê½£¬Ò»²»¿ØÎÂ£¬¶þ¿ØÎÂ
+ 820   2          // ¨‹--------------------------------------¨‹ //
+ 821   2          // 1.¸ù¾Ýµ²Î»È·¶¨Êä³öÁ¿-Õ¼¿Õ±È£¬²»µ÷ÎÂ
+ 822   2      //    HeatDuty = HeatDutyMax;
+ 823   2          // ¡ø--------------------------------------¡ø //
+ 824   2          
+ 825   2          // ¨‹--------------------------------------¨‹ //
+ 826   2          // 2.¸ù¾Ýµ²Î»¸ø¶¨µÄÎÂ¶È£¬µ÷½ÚÊä³öÁ¿-Õ¼¿Õ±È£¬µ÷ÎÂ
+ 827   2          #if (CHECK_HEATER_TEMPER == 1)    // ÈçÐè¼ì²âµçÈÈË¿ÎÂ¶È
+ 828   2          // a.b. ¶þÑ¡Ò»
+ 829   2          // a.¸ù¾Ý²âµÃÉãÊÏ¶È
+ 830   2          if(mcState == mcRun)
+ 831   2          {
+ 832   3          if(HeatTemperCelsius > HEAT_TEMPER_LV1)             //µ±Ç°ÎÂ¶È¸ßÓÚ¸ø¶¨Öµ£¬ÉèÖÃ¹ýÎÂ±êÖ¾
+ 833   3          {
+ 834   4            WindTemperHigh = 1;
+ 835   4            WindTemperDelta = 0;
+ 836   4      //      SaveCnt = 0;
+ 837   4          }
+ 838   3          }
+ 839   2      //    else if(HeatTemperCelsius <= (WindTemperRef-0))    //Îª·ÀÖ¹ÁÙ½çµãÊ¶±ð¶¶¶¯£¬µ±Ç°ÎÂ¶ÈµÍÓÚ¸ø¶¨Öµ¼õÈ¥ÖÍ»
+             -ØÇø¼ä£¬
+ 840   2      //    {
+ 841   2      //      WindTemperHigh = 0;
+ 842   2      //      WindTemperDelta = WindTemperRef - HeatTemperCelsius;
+ 843   2      //    }
+ 844   2          
+ 845   2          // b.¸ù¾ÝADC²ÉÑùÖµ
+ 846   2      //    if(HeatTemperADCVal < HeatAdcValRef)             //µ±Ç°ÎÂ¶È¸ßÓÚ¸ø¶¨Öµ£¬ÉèÖÃ¹ýÎÂ±êÖ¾
+ 847   2      //      WindTemperHigh = 1;
+ 848   2      //    else if(HeatTemperADCVal > (HeatAdcValRef+10))  //Îª·ÀÖ¹ÁÙ½çµãÊ¶±ð¶¶¶¯£¬µ±Ç°ÎÂ¶ÈµÍÓÚ¸ø¶¨Öµ¼õÈ¥ÖÍ»ØÇø
+             -¼ä£¬
+ 849   2      //      WindTemperHigh = 0;
+ 850   2          
+ 851   2          // a.b.½áÊø
+ 852   2          if(HeatTemperADCVal > 4050)                       // ÏßÂ·¹ÊÕÏÊ±£¬²ÉÑùÖµ½«½Ó½üQ12(1),°²È«ÖµÒÔÏÂ¿ªÆôµçÈÈ
+             -Ë¿
+ 853   2            HeatDutyMax = 0;
+ 854   2          
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 15  
+
+ 855   2          #else                                             // Èç·ñ£¬²»²âÎÂ¶È£¬±£³Ö¼ÓÈÈ×´Ì¬
+                  WindTemperHigh = 0;
+                  
+                  #endif
+ 859   2          
+ 860   2          if(CoolCmdLv != 1)
+ 861   2          {
+ 862   3      //      if(++HeatRegulTmr >= 6)
+ 863   3      //      {
+ 864   3      //        HeatRegulTmr = 0;
+ 865   3      //        
+ 866   3      //        if(WindTemperHigh == 1)
+ 867   3      //        {
+ 868   3      //          if(HeatDutyAlt > 0)
+ 869   3      //            HeatDutyAlt--;
+ 870   3      //          
+ 871   3      //          HeatDutyAltTop = 0;
+ 872   3      //        }
+ 873   3      //        else
+ 874   3      //        {
+ 875   3      //          HeatDutyAlt++;
+ 876   3      //          if(WindTemperDelta < 20)
+ 877   3      //            HeatDutyAltTop = WindTemperDelta;
+ 878   3      //          else
+ 879   3      //            HeatDutyAltTop = 19;
+ 880   3      //        }
+ 881   3      //      }
+ 882   3            HeatDutyAlt = HeatDutyMax;
+ 883   3          }
+ 884   2          else
+ 885   2          {
+ 886   3            HeatRegulTmr = 0;
+ 887   3          }
+ 888   2          // ¨Œ---------------------------------------- //
+ 889   2          // 4µ²ÈÈÎªÀäÈÈÑ­»··ç
+ 890   2          #if (HEAT_CMD_LV_MAX == 4)
+ 891   2          if(HeatCmdLv == 4 && CoolCmdLv == 0)
+ 892   2          {
+ 893   3            if(++HeatLv4X10ms > 1142)
+ 894   3              HeatLv4X10ms = 0;
+ 895   3            else if(HeatLv4X10ms > 428)
+ 896   3              HeatDutyMax = 0;
+ 897   3          }
+ 898   2          else
+ 899   2            HeatLv4X10ms = 0;
+ 900   2          #endif
+ 901   2          // ----------------------------------------¡÷ //
+ 902   2              
+ 903   2      //    if(HeatDutyAlt > HeatDutyAltTop)
+ 904   2      //      HeatDutyAlt = HeatDutyAltTop;
+ 905   2          
+ 906   2          if(HeatDutyAlt > HeatDutyMax)
+ 907   2            HeatDutyAlt = HeatDutyMax;
+ 908   2          
+ 909   2          if(HeatDutyMax != 0)
+ 910   2          {
+ 911   3            if(HeatDutyAlt > HearterPMWDutyDowm)
+ 912   3            {
+ 913   4              HeatDutyAlt = HeatDutyAlt + HearterPMWDutyRise - HearterPMWDutyDowm;
+ 914   4            }
+ 915   3            else
+ 916   3            {
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 16  
+
+ 917   4              HeatDutyAlt = 1;
+ 918   4            }
+ 919   3          }
+ 920   2      
+ 921   2          if(HeatDutyAlt > 20)
+ 922   2            HeatDutyAlt = 20;
+ 923   2          
+ 924   2          HeatDutyH = HeatDutyAlt/2;
+ 925   2          HeatDutyL = HeatDutyH + HeatDutyAlt%2;
+ 926   2      
+ 927   2          // ¡ø--------------------------------------¡ø //
+ 928   2          
+ 929   2        }
+ 930   1        else if(KeyPro1msTmr == 7)
+ 931   1        {
+ 932   2          
+ 933   2          // xjc ·çËÙµµ°´ÕÕ¶þ½øÖÆÁÁµÆ
+ 934   2          if(mcState == mcRun && KeyOnOffCmd == 1){
+ 935   3              
+ 936   3            LED_SPEED_bit_1 = !(bit)((SpeedCmdLv & 0x01)>>0);
+ 937   3            LED_SPEED_bit_2 = !(bit)((SpeedCmdLv & 0x02)>>1);
+ 938   3            LED_SPEED_bit_3 = !(bit)((SpeedCmdLv & 0x04)>>2);
+ 939   3            LED_SPEED_bit_4 = !(bit)((SpeedCmdLv & 0x08)>>3);
+ 940   3            LED_SPEED_bit_5 = !(bit)((SpeedCmdLv & 0x10)>>4);
+ 941   3            LED_SPEED_bit_6 = !(bit)((SpeedCmdLv & 0x20)>>5);       
+ 942   3            
+ 943   3            }
+ 944   2        
+ 945   2          
+ 946   2          
+ 947   2      //    // ¨Œ---------------------------------------- //
+ 948   2      //    // ËÙ¶ÈÖ¸Ê¾µÆ±äÁ¿È«²¿Çå³ý
+ 949   2      //    LedSpd1 = LED_SET_OFF;
+ 950   2      //    LedSpd2 = LED_SET_OFF;
+ 951   2      //    LedSpd3 = LED_SET_OFF;
+ 952   2      //    
+ 953   2      //    // ÈÈ¶ÈÖ¸Ê¾µÆ±äÁ¿È«²¿Çå³ý
+ 954   2      //    LedHeat1 = LED_SET_OFF;
+ 955   2      //    LedHeat2 = LED_SET_OFF;
+ 956   2      //    LedHeat3 = LED_SET_OFF;
+ 957   2      //    
+ 958   2      //    // ¸ù¾ÝËÙ¶ÈÖ¸ÁîÁÁµÆ
+ 959   2      //    if(mcState == mcRun)
+ 960   2      //    {
+ 961   2      //      if(KeyOnOffCmd == 1)
+ 962   2      //      {
+ 963   2      //        if(SpeedCmdLv == 1)
+ 964   2      //        {
+ 965   2      //          LedSpd1 = LED_SET_ON;
+ 966   2      //        }
+ 967   2      //        else if(SpeedCmdLv == 2)
+ 968   2      //        {
+ 969   2      //          LedSpd1 = LED_SET_ON;
+ 970   2      //          LedSpd2 = LED_SET_ON;
+ 971   2      //        }
+ 972   2      //        else if(SpeedCmdLv == 3)
+ 973   2      //        {
+ 974   2      //          LedSpd1 = LED_SET_ON;
+ 975   2      //          LedSpd2 = LED_SET_ON;
+ 976   2      //          LedSpd3 = LED_SET_ON;
+ 977   2      //        }
+ 978   2      //      }
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 17  
+
+ 979   2      //    }
+ 980   2      //    else
+ 981   2      //    {
+ 982   2      //      if(++LedAlarmFlashCnt < 50)
+ 983   2      //      {
+ 984   2      //        if(AlarmFlag2 & 0x01)
+ 985   2      //        {
+ 986   2      //          LedSpd1 = LED_SET_ON;
+ 987   2      //          LedSpd2 = LED_SET_ON;
+ 988   2      //          LedSpd3 = LED_SET_ON;
+ 989   2      //          LedHeat1 = LED_SET_ON;
+ 990   2      //          LedHeat2 = LED_SET_ON;
+ 991   2      //          LedHeat3 = LED_SET_ON;
+ 992   2      //        }
+ 993   2      //        else if(AlarmFlag & 0x01)
+ 994   2      //        {
+ 995   2      //          LedSpd1 = LED_SET_ON;
+ 996   2      //          LedSpd2 = LED_SET_ON;
+ 997   2      //        }
+ 998   2      //        else if(AlarmFlag & 0x02)
+ 999   2      //        {
+1000   2      //          LedSpd1 = LED_SET_ON;
+1001   2      //          LedHeat1 = LED_SET_ON;
+1002   2      //          LedHeat2 = LED_SET_ON;
+1003   2      //        }
+1004   2      //        else if(AlarmFlag & 0x04)
+1005   2      //        {
+1006   2      //          LedHeat1 = LED_SET_ON;
+1007   2      //          LedHeat2 = LED_SET_ON;
+1008   2      //          LedHeat3 = LED_SET_ON;
+1009   2      //        }
+1010   2      //        else if(AlarmFlag & 0x08)
+1011   2      //        {
+1012   2      //          LedSpd3 = LED_SET_ON;
+1013   2      //          LedHeat1 = LED_SET_ON;
+1014   2      //          LedHeat2 = LED_SET_ON;
+1015   2      //          LedHeat3 = LED_SET_ON;
+1016   2      //        }
+1017   2      //        else if(AlarmFlag & 0x10)
+1018   2      //        {
+1019   2      //          LedSpd1 = LED_SET_ON;
+1020   2      //        }
+1021   2      //        else if(AlarmFlag & 0x40)
+1022   2      //        {
+1023   2      //          LedSpd2 = LED_SET_ON;
+1024   2      //          LedSpd3 = LED_SET_ON;
+1025   2      //          LedHeat1 = LED_SET_ON;
+1026   2      //          LedHeat2 = LED_SET_ON;
+1027   2      //          LedHeat3 = LED_SET_ON;
+1028   2      //        }
+1029   2      //      }
+1030   2      //      else if(LedAlarmFlashCnt > 100)
+1031   2      //      {   
+1032   2      //        LedAlarmFlashCnt = 0;
+1033   2      //      }
+1034   2      //    }
+1035   2      //    
+1036   2      ////    if(mcState != mcRun)
+1037   2      ////    {
+1038   2      ////      if(SpeedCmdLv == 1)
+1039   2      ////        LedSpd1 = LED_SET_ON;
+1040   2      ////      else if(SpeedCmdLv == 2)
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 18  
+
+1041   2      ////        LedSpd2 = LED_SET_ON;
+1042   2      ////      else
+1043   2      ////        LedSpd3 = LED_SET_ON;
+1044   2      ////    }
+1045   2      //    
+1046   2      //    LED_SPEED_1 = LedSpd1;
+1047   2      //    LED_SPEED_2 = LedSpd2;
+1048   2      //    LED_SPEED_3 = LedSpd3;
+1049   2      //    // ----------------------------------------¡÷ //
+1050   2      //    
+1051   2      //    // ¨Œ---------------------------------------- //
+1052   2      //    // ÈÈ¶ÈÖ¸Ê¾µÆ±äÁ¿È«²¿Çå³ý
+1053   2      ////    LedHeat1 = LED_SET_OFF;
+1054   2      ////    LedHeat2 = LED_SET_OFF;
+1055   2      ////    LedHeat3 = LED_SET_OFF;
+1056   2      //    
+1057   2      //    // ¸ù¾ÝÈÈ¶ÈÖ¸ÁîÁÁµÆ
+1058   2      //    if(HeatDisableFlag == 0)
+1059   2      //    {
+1060   2      //      if(HeatCmdLv == 1)
+1061   2      //      {
+1062   2      //        LedHeat1 = LED_SET_ON;
+1063   2      //      }
+1064   2      //      else if(HeatCmdLv == 2)
+1065   2      //      {
+1066   2      //        LedHeat1 = LED_SET_ON;
+1067   2      //        LedHeat2 = LED_SET_ON;
+1068   2      //      }
+1069   2      //      else if(HeatCmdLv == 3)
+1070   2      //      {
+1071   2      //        LedHeat1 = LED_SET_ON;
+1072   2      //        LedHeat2 = LED_SET_ON;
+1073   2      //        LedHeat3 = LED_SET_ON;
+1074   2      //      }
+1075   2      //      else if(HeatCmdLv == 4)
+1076   2      //      {
+1077   2      //          
+1078   2      //        if(++LedAltX10ms < 70)
+1079   2      //        {LedHeat1 = LED_SET_ON;}
+1080   2      //        else if(LedAltX10ms < 140)
+1081   2      //        {
+1082   2      //          LedHeat1 = LED_SET_ON;
+1083   2      //          LedHeat2 = LED_SET_ON;
+1084   2      //        }
+1085   2      //        else if(LedAltX10ms < 210)
+1086   2      //        {
+1087   2      //          LedHeat1 = LED_SET_ON;
+1088   2      //          LedHeat2 = LED_SET_ON;
+1089   2      //          LedHeat3 = LED_SET_ON;
+1090   2      //        }
+1091   2      //        else if(LedAltX10ms < 280)
+1092   2      //        {
+1093   2      //          ;
+1094   2      //        }
+1095   2      //        else
+1096   2      //          LedAltX10ms = 0;
+1097   2      //      }
+1098   2      //    }
+1099   2      //    else
+1100   2      //    {
+1101   2      //      LedAltX10ms = 0;
+1102   2      //    }
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 19  
+
+1103   2      ////    if(mcState != mcRun)
+1104   2      ////    {
+1105   2      ////    
+1106   2      ////      if(mcState != mcReady)
+1107   2      ////      {
+1108   2      ////        if(HeatCmdLv == 1)
+1109   2      ////          LedHeat1 = LED_SET_ON;
+1110   2      ////        else if(HeatCmdLv == 2)
+1111   2      ////          LedHeat2 = LED_SET_ON;
+1112   2      ////        else
+1113   2      ////          LedHeat3 = LED_SET_ON;
+1114   2      ////      }
+1115   2      ////    }
+1116   2      
+1117   2      //    LED_HEAT_1 = LedHeat1;
+1118   2      //    LED_HEAT_2 = LedHeat2;
+1119   2      //    LED_HEAT_3 = LedHeat3;
+1120   2          // ----------------------------------------¡÷ //
+1121   2        }
+1122   1      //  else if(KeyPro1msTmr == 8)
+1123   1      //  {
+1124   1      
+1125   1      //   
+1126   1      //  }
+1127   1      //  else if(KeyPro1msTmr == 9)
+1128   1      //  {
+1129   1          // ÔËÐÐ²ÊµÆ£¬Í£Ö¹×Ï£¬ÔËÐÐÂÌ
+1130   1      //    if(KeyOnOffCmd == 0)
+1131   1      //    {
+1132   1      //      LED_RED = LED_SET_ON;
+1133   1      //      LED_GREEN = LED_SET_OFF;
+1134   1      //      LED_BLUE = LED_SET_ON;
+1135   1      //    }
+1136   1      //    else
+1137   1      //    {
+1138   1      //      LED_RED = LED_SET_OFF;
+1139   1      //      LED_GREEN = LED_SET_ON;
+1140   1      //      LED_BLUE = LED_SET_OFF;
+1141   1      //    }
+1142   1      //  }
+1143   1      
+1144   1        #if (THRYRST_ENABLE == 1)
+1145   1        // Thryster ¿ØÖÆ--------------------------------//
+1146   1        // ÔÚÕý³£½»Á÷ÓÃµçÇé¿öÏÂÃ¿10ms¿É²âµÃÒ»´Î¹ýÁã
+1147   1        // ½»Á÷µçÔ´¹ýÁã±êÖ¾ÔÚÖÐ¶Ï´¦ÀíÖÐÉèÖÃ£¬´Ë´¦Ã¿ºÁÃë¼ì²â±êÖ¾Î»
+1148   1        if(ACCrossForThryrist == 1)
+1149   1        {
+1150   2          ACCrossForThryrist = 0;
+1151   2          
+1152   2          // Êä³öÁ¿Õ¼¿Õ±È´¦Àí£¬10´Î¹ýÁãÎªÒ»¸öÖÜÆÚ
+1153   2          if(HeatDutyOnCnt < HeatDutyH)
+1154   2            ThryristTrigKeepCnt = 3;      // ÉèÖÃ¾§Õ¢¹Ü´¥·¢±£³ÖÊ±³¤ -ºÁÃë
+1155   2          else
+1156   2            ThryristTrigKeepCnt = 0;
+1157   2          
+1158   2          if(++HeatDutyOnCnt >= 10)
+1159   2            HeatDutyOnCnt = 0;
+1160   2          
+1161   2          if(HeatDutyOnCnt2 >= (10 - HeatDutyL))
+1162   2            ThryristTrigKeepCnt2 = 3;      // ÉèÖÃ¾§Õ¢¹Ü´¥·¢±£³ÖÊ±³¤ -ºÁÃë
+1163   2           else
+1164   2            ThryristTrigKeepCnt2 = 0;
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 20  
+
+1165   2          
+1166   2          if(++HeatDutyOnCnt2 >= 10)
+1167   2            HeatDutyOnCnt2 = 0;   
+1168   2          
+1169   2      //    if(WindTemperHigh == 0)             //µ±Ç°ÎÂ¶È¸ßÓÚ¸ø¶¨Öµ£¬ÉèÖÃ¹ýÎÂ±êÖ¾
+1170   2      //    {
+1171   2      //      SaveCnt = 0;
+1172   2      //    }
+1173   2      //    else
+1174   2      //    {
+1175   2      //      SaveLine[SaveCnt] = HeatTemperCelsius;
+1176   2      //      if(++SaveCnt>=24)
+1177   2      //        SaveCnt = 0;
+1178   2      //    }
+1179   2        }
+1180   1          
+1181   1        
+1182   1        // ¾§Õ¢¹Üµ¼Í¨ÐÅºÅ±£³ÖÊ±³¤NºÁÃë ¶þÑ¡Ò»
+1183   1        // ¨‹--------------------------------------¨‹ //
+1184   1        // 1. Í¬Ê±¿ØÖÆÁ½¸ö¹Ü×Ó
+1185   1      //  if(ThryristTrigKeepCnt > 0)
+1186   1      //  {
+1187   1      //    ThryristTrigKeepCnt --;
+1188   1      
+1189   1      //    if(RunningX1ms > 1000)
+1190   1      //    {
+1191   1      //      HEAT_WIRE_H_ON;
+1192   1      //      HEAT_WIRE_L_ON;//HEAT_WIRE_L_OFF;//
+1193   1      //    }
+1194   1      //    else
+1195   1      //    {
+1196   1      //      HEAT_WIRE_H_OFF;
+1197   1      //      HEAT_WIRE_L_OFF;
+1198   1      //    }
+1199   1      //  }
+1200   1      //  else
+1201   1      //  {
+1202   1      //    HEAT_WIRE_H_OFF;
+1203   1      //    HEAT_WIRE_L_OFF;
+1204   1      //  }
+1205   1        // ¡ô--------------------------------------¡ô //
+1206   1        // 2. ·Ö±ð¿ØÖÆÁ½¸ö¹Ü×Ó
+1207   1        if(ThryristTrigKeepCnt > 0)
+1208   1        {
+1209   2      //    ThryristTrigKeepCnt --;
+1210   2            
+1211   2          if(RunningX1ms > 1000)
+1212   2            Heat_wire_H = HEAT_WIRE_H_ON;
+1213   2          else
+1214   2            Heat_wire_H = HEAT_WIRE_H_OFF;
+1215   2        }
+1216   1        else
+1217   1          Heat_wire_H = HEAT_WIRE_H_OFF;
+1218   1        
+1219   1      
+1220   1        if(ThryristTrigKeepCnt2 > 0)
+1221   1        {
+1222   2      //    ThryristTrigKeepCnt2 --;
+1223   2            
+1224   2          if(RunningX1ms > 1000)
+1225   2            Heat_wire_L = HEAT_WIRE_L_ON;
+1226   2          else
+C51 COMPILER V9.60.7.0   USERDRYER                                                         10/12/2023 09:19:16 PAGE 21  
+
+1227   2            Heat_wire_L = HEAT_WIRE_L_OFF;
+1228   2        }
+1229   1        else
+1230   1          Heat_wire_L = HEAT_WIRE_L_OFF;
+1231   1        // ¡ø--------------------------------------¡ø //
+1232   1        #endif
+1233   1        
+1234   1      //  // µ÷ÊÔÖÐ£¬¹Ø±Õ¾§Õ¢¹Ü
+1235   1      //  HEAT_WIRE_H_OFF;
+1236   1      //  HEAT_WIRE_L_OFF;
+1237   1      
+1238   1        if(PwrOnStage == 0)
+1239   1        {
+1240   2          KeyGoDuty = _Q12(0);
+1241   2          
+1242   2          if((PwrOnX1ms > 50)||(QuickStartFlag==1))
+1243   2          {
+1244   3            PwrOnStage = 2;
+1245   3            KeyOnOffCmd = 1;
+1246   3            //KeyOnLockLv = 1;
+1247   3            KeyOnOffTrig = 0;
+1248   3          }
+1249   2        }
+1250   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1759    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     12    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =     37    ----
+   BIT SIZE         =     11    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

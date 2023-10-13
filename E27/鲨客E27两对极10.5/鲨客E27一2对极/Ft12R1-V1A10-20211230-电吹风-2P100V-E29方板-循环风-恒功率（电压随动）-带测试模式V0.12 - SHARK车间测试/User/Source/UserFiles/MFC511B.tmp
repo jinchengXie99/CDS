@@ -1,0 +1,1172 @@
+
+
+/* Includes -------------------------------------------------------------------------------------*/
+#include <FU68xx_2.h>
+#include <Myproject.h>
+#include <Customer_Debug.h>
+
+#include <UserGlobal.h>
+#include <UserDefine.h>
+
+/* Private typedef ------------------------------------------------------------------------------*/
+/* Private define -------------------------------------------------------------------------------*/
+/* Private macro --------------------------------------------------------------------------------*/
+/* Private variables ----------------------------------------------------------------------------*/
+/* Private function prototypes ------------------------------------------------------------------*/
+/* Private functions ----------------------------------------------------------------------------*/
+
+//============================================================================//
+
+// 方板
+//#define KEY_ON                GP06          // 开启端
+//#define KEY_LOCK              GP05          // 锁定端
+
+//#define KEY_SPEED             GP17          // 速度按键
+//#define KEY_HEAT              GP15          // 热度按键
+//#define KEY_COOL              GP13          // 冷风按键
+
+//#define LED_SPEED_1           GP03          // 风速灯
+//#define LED_SPEED_2           GP02
+//#define LED_SPEED_3           GP01
+
+//#define LED_HEAT_1            GP00          // 热量灯
+//#define LED_HEAT_2            GP37
+//#define LED_HEAT_3            GP36
+
+// 圆板
+#define KEY_ON                GP06          // 开启端
+#define KEY_LOCK              GP05          // 锁定端
+
+#define KEY_SPEED             GP15          // 速度按键
+#define KEY_HEAT              GP13          // 热度按键
+#define KEY_COOL              GP17          // 冷风按键
+
+#define LED_SPEED_1           GP00          // 风速灯
+#define LED_SPEED_2           GP37
+#define LED_SPEED_3           GP36
+
+#define LED_HEAT_1            GP03          // 热量灯
+#define LED_HEAT_2            GP02
+#define LED_HEAT_3            GP01
+
+
+#define HEAT_WIRE_H_ON        0//(GP11=0)          // 高热加热丝使能
+#define HEAT_WIRE_L_ON        0//(GP10=0)          // 低热加热丝使能
+#define HEAT_WIRE_H_OFF       1//(GP11=1)          // 高热加热丝使能
+#define HEAT_WIRE_L_OFF       1//(GP10=1)          // 低热加热丝使能
+
+#define LED_SET_ON            0             // LED有效亮
+#define LED_SET_OFF           1             // LED无效灭
+
+#define SPD_CMD_LV_MAX        3             // 转速最高挡
+#define HEAT_CMD_LV_MAX       4             // 温度最高挡
+
+#define START_SPD_CMD_LV      3             // 启动转速挡设置  1 2 3
+#define START_HEAT_CMD_LV     1             // 启动温度挡设置  0 1 2 3 4
+#define START_COOL_CMD_LV     1             // 启动冷风挡设置
+
+#define POWER_LV1             70            // 1挡功率 - W
+#define POWER_LV2             80            // 2挡功率 - W
+#define POWER_LV3             90            // 3挡功率 - W
+
+#define RPM_LV1               85000          // 1挡转速 - RPM
+#define RPM_LV2               104000           // 2挡转速 - RPM
+#define RPM_LV3               112000         // 3挡转速 - RPM
+
+#define HEAT_DUTY_LV1         7              // 1挡占空比最大值 - n/5
+#define HEAT_DUTY_LV2         11             // 2挡占空比最大值 - n/5
+#define HEAT_DUTY_LV3         15             // 3挡占空比最大值 - n/5
+#define HEAT_DUTY_LV4         18             // 3挡占空比最大值 - n/5
+#define HEAT_DUTY_LV4_1       13             // 3挡温度1档风速占空比最大值 - n/5
+
+#define HEAT_TEMPER_LV1       66             // 1挡给定热风温度 - 摄氏度
+#define HEAT_TEMPER_LV2       81             // 2挡给定热风温度 - 摄氏度
+#define HEAT_TEMPER_LV3       101            // 3挡给定热风温度 - 摄氏度
+#define HEAT_TEMPER_LV4       80             // 4挡给定热风温度 - 摄氏度
+
+#define HEAT_R_VAL_LV1        29.8255       // 1挡给定热风温度对应采样电阻值
+#define HEAT_R_VAL_LV2        24.816        // 2挡给定热风温度对应采样电阻值
+#define HEAT_R_VAL_LV3        17.4087       // 3挡给定热风温度对应采样电阻值
+#define HEAT_R_VAL_LV4        17.4087       // 4挡给定热风温度 - 摄氏度
+
+#define THRYRST_ENABLE        1             //  0:禁止 1:使能  是否控制晶闸管
+#define CHECK_HEATER_TEMPER   1             //  0:禁止 1:使能  是否检测电热丝温度是否
+
+#define SPEED_LV1             _Q15(RPM_LV1 / MOTOR_SPEED_BASE)
+#define SPEED_LV2             _Q15(RPM_LV2 / MOTOR_SPEED_BASE)
+#define SPEED_LV3             _Q15(RPM_LV3 / MOTOR_SPEED_BASE)
+
+#define HEAT_ADC_VAL_LV1      HEAT_CELSIUS_ADC(HEAT_R_VAL_LV1)    // 1挡给定热风温度对应采样电阻值
+#define HEAT_ADC_VAL_LV2      HEAT_CELSIUS_ADC(HEAT_R_VAL_LV2)    // 2挡给定热风温度对应采样电阻值
+#define HEAT_ADC_VAL_LV3      HEAT_CELSIUS_ADC(HEAT_R_VAL_LV3)    // 3挡给定热风温度对应采样电阻值
+#define HEAT_ADC_VAL_LV4      HEAT_CELSIUS_ADC(HEAT_R_VAL_LV4)    // 3挡给定热风温度对应采样电阻值
+
+#define POWER_DUTY_LV1        CAL_POWER_Q12(POWER_LV1)
+#define POWER_DUTY_LV2        CAL_POWER_Q12(POWER_LV2)
+#define POWER_DUTY_LV3        CAL_POWER_Q12(POWER_LV3)
+
+#define POWER_UXI_SMP_LV1     (u32)POWER_TO_SMP(POWER_LV1)//*0.9
+#define POWER_UXI_SMP_LV2     (u32)POWER_TO_SMP(POWER_LV2)//*0.93
+#define POWER_UXI_SMP_LV3     (u32)POWER_TO_SMP(POWER_LV3)//*0.95
+
+//============================================================================//
+
+extern u16 PwrOnX1ms;
+extern u8  Loop1msCnt;
+extern u8  QuickStartFlag;
+extern u16 UBusX10;
+extern u16 RunningX1ms;
+extern u16 IBusFilt_mA;
+extern u16 IBusCommand_mA;
+extern u16 IBusSmp;
+extern u8  KeyOnOffCmd;
+extern u8  KeyOnOffTrig;
+extern u16 KeyGoDuty;
+extern u16 KeyGoDutyMax;
+extern u32 idata UxISmp;
+extern u32 idata VspPwrCmd;
+extern s16 idata VspSpdAlt;
+extern s16 idata VspSpdCmd;
+extern s16 idata VspSpdCmdMax;
+extern u8  idata AlarmFlag;                // 报警值
+extern u8  idata AlarmFlag2;
+
+struct KeyType{
+  u8  Old       :1;     // 采样旧值
+  u8  New       :1;     // 采样新值
+  u8  Filt      :1;     // 采样滤波值
+  u8  Lv        :1;     // 端口电平
+  u8  PreLv     :1;     // 端口电平旧值
+  u8  Rise      :1;     // 上升沿
+  u8  Fall      :1;     // 下降沿
+};
+
+struct KeyType KeySpeed;              // 
+struct KeyType KeyHeat;               // 
+struct KeyType KeyCool;               // 
+struct KeyType KeyOnOff;
+
+u8  KeyPro1msTmr;                     // 
+
+u8  PwrOnStage;                       // 
+u8  HeatDisableFlag;                  // 
+
+u16 idata HeatTemperADCVal;
+s16 idata HeatTemperCelsius;
+
+u8  idata KeyOnLockLv;                // 三态指令: 0：关闭；1：受控；2：锁定
+u8  idata KeyOnLockLvPre;             // 三态指令上一次值
+u8  idata KeyOnLockSmpNew;            // 端口采样
+u8  idata KeyOnLockSmpOld;
+u8  idata KeyOnLockKeepCnt;
+
+u8  idata SpeedShiftStep;           // 速度挡实际值 1-4 其中
+u8  idata SpeedCmdLv;               // 速度挡命令值
+
+u8  idata HeatShiftStep;            // 
+u8  idata HeatCmdLv;                // 
+
+u8  idata CoolCmdLv;                // 冷风命令
+u8  idata CoolShiftLv;              // 
+
+u8  idata ACCrossForThryrist;       // 晶闸管控制参考的交流过零标志
+
+u8  idata RePowerRunTrig;           // 重新上电后的启动触发
+
+u8  idata HeatDutyH;                // 上发热丝加热量给定
+u8  idata HeatDutyL;                // 下发热丝加热量给定
+u8  idata HeatDutyMax;              // 加热量各挡位对应的限制值
+u8  idata HeatDutyAlt;              // 加热量调节值
+u8  idata HeatDutyAltTop;           // 加热量调节值上限
+
+u8  idata HeatDutyPeriod;           // 加热处理周期
+u8  idata HeatDutyOnCnt;            // 加热有效时段
+u8  idata HeatDutyOnCnt2;           // 加热有效时段
+
+u8  idata ThryristTrigKeepCnt;      // 晶闸管触发保持时长 -毫秒
+u8  idata ThryristTrigKeepCnt2;     // 晶闸管触发保持时长 -毫秒
+
+s8  idata WindTemperRef;            // 热风给定值 摄氏度
+s16 idata HeatAdcValRef;            // 热风给定值 ADC转换值
+u16 idata LedAltX10ms;
+
+bit WindTemperHigh;                 // 电热丝过热标志
+bit LedHeat1;
+bit LedHeat2;
+bit LedHeat3;
+bit LedSpd1;
+bit LedSpd2;
+bit LedSpd3;
+
+u8  idata KeySpeedActX10ms;         // 有效状态保持计时 × 10ms
+u16 idata ReverseCleanX10ms;        // 反转清洁时长
+
+bit ReverseCleanTrig;
+bit ReverseCleanCmd;
+bit Heat_wire_H = 1;
+bit Heat_wire_L = 1;
+
+u8  HeatRegulTmr;
+u8  WindTemperDelta;                // 热风给定与实测差值
+u16 idata HeatLv4X10ms;             // 热风4挡计时
+
+u8  LedAlarmFlashCnt;               //错误指示灯闪烁计数
+
+//u8  idata HeatLowDuty=0;          // 加热量给定
+//u8  idata HeatLowDutyMax=0;       // 加热量最大值
+//u8  idata KeySpeedLvStayCnt=0;    // 当前电平保持计数
+
+//u8  idata KeyHeatLvStayCnt=0;
+//u8  idata KeyHeatActX10ms=0;
+//u8  idata KeyCoolLvStayCnt=0;
+//u8  idata KeyCoolLvX10ms=0;
+//u8  idata KeyMt2LvStayCnt;
+//u8  idata KeyMt2LvX10ms;
+//u8  idata VZeroCrossLose;
+//u8  idata VZeroCrossReturn;
+//============================================================================//
+//----------------------------------------------------------------------------//
+// 说明：速度挡位按键计数为1-2-3-4-1-2...循环，对应挡位变化顺序为1-2-3-2-1-2...循环计数
+void CalSpeedStepToCmd(void)
+{
+  // 1  2  3  4  1
+  // 1  2  3  2  1
+  
+  if((SpeedShiftStep == 0)||(SpeedShiftStep >= (2*SPD_CMD_LV_MAX-1)))     // A-0  B-1  C-2  D-3  E-2  F-1  G-2
+    SpeedShiftStep = 1;
+    
+  if(SpeedShiftStep <= SPD_CMD_LV_MAX)
+    SpeedCmdLv = SpeedShiftStep;
+  else
+    SpeedCmdLv = (2*SPD_CMD_LV_MAX) - SpeedShiftStep;
+}
+//----------------------------------------------------------------------------//
+// 说明：温度挡位按键计数为0-1-2-3-4-5-0-1-2...循环，对应挡位变化顺序为0-1-2-3-2-1-0-1-2...循环计数
+void CalHeatStepToCmd(void)
+{
+  // 0  1  2  3  4  5  6  7  0
+  // 0  1  2  3  4  3  2  1  0
+  
+  // 热风有0挡需求
+//  if(HeatShiftStep >= (2*HEAT_CMD_LV_MAX))      // A-0  B-1  C-2  D-3  E-4  F-3  G-2  H-1  I-0 
+//    HeatShiftStep = 0;
+  
+  // 热风无0挡需求
+  if((HeatShiftStep == 0)||(HeatShiftStep >= (2*HEAT_CMD_LV_MAX-1)))      // A-0  B-1  C-2  D-3  E-2  F-1  G-2
+    HeatShiftStep = 1;
+  
+  if(HeatShiftStep <= HEAT_CMD_LV_MAX)
+    HeatCmdLv = HeatShiftStep;
+  else
+    HeatCmdLv = (2*HEAT_CMD_LV_MAX) - HeatShiftStep;
+}
+//----------------------------------------------------------------------------//
+// 说明：
+void CalCoolLvToCmd(void)
+{
+  CoolCmdLv = CoolShiftLv;
+}
+//----------------------------------------------------------------------------//
+// 说明：开关初始化，转速挡，温度挡，冷风挡，初始值给定
+void DryerKeysDefault(void)
+{
+  SpeedShiftStep = START_SPD_CMD_LV;            // 转速
+  HeatShiftStep = START_HEAT_CMD_LV;            // 温度
+  CoolShiftLv = START_COOL_CMD_LV;              // 冷风
+}
+//----------------------------------------------------------------------------//
+// 说明：开关初始化，转速挡，温度挡，冷风挡，初始值给定
+//void KeysInitial(void)
+//{
+//  SpeedShiftStep = SpeedSavedStep = START_SPD_CMD_LV;   // 转速
+//  HeatShiftStep = HeatSavedStep = START_HEAT_CMD_LV;    // 温度
+//  CoolShiftLv = CoolSavedLv = START_COOL_CMD_LV;        // 冷风
+
+//  CalSpeedStepToCmd();
+//  CalHeatStepToCmd();
+//  CalCoolLvToCmd();
+//}
+//----------------------------------------------------------------------------//
+// 说明：吹风机按键控制
+void DryerPer1ms(void)
+{
+  
+  KeyPro1msTmr = Loop1msCnt;   // 与 LoopProPer1ms() 计数一致
+  
+  // 分时处理
+  if(KeyPro1msTmr == 2)
+  {
+    // 读取总开关状态
+
+    // ▼--------------------------------------▼ //
+    // 1. 无开关，上电运行
+    //
+    KeyOnLockLv = 1;
+    
+    // ▲--------------------------------------▲ //
+     
+    // ▼--------------------------------------▼ //
+    // 2. 三态开关处理，关闭、运行、锁定
+
+//    KeyOnLockSmpOld = KeyOnLockSmpNew;        // 保留上次采样值
+//    KeyOnLockLvPre = KeyOnLockLv;             // 保留上次滤波结果
+//    
+//    KeyOnLockSmpNew = KEY_ON;                 // 使能端口
+//    
+//    if(KEY_LOCK == 1)                         // 锁定端口
+//      KeyOnLockSmpNew += 2;
+//    
+//    if(KeyOnLockSmpOld == KeyOnLockSmpNew)    // 多次计数，滤波处理
+//    {
+//      if(++KeyOnLockKeepCnt >= 3)
+//      {
+//        KeyOnLockKeepCnt = 3;
+//        KeyOnLockLv = 3 - KeyOnLockSmpNew;
+//      }
+//    }
+//    
+//    if(KeyOnLockLv > 2)                        // 获得使能锁定值
+//      KeyOnLockLv = 0;
+//    
+////    // ▽---------------------------------------- //
+////    // 是否有长按反转要求
+////    // a. 无
+//    if(KeyOnLockLv == 0)                       // 关闭态确保无输出，
+//    {
+//      if(ReverseCleanTrig == 1)
+//      {
+//        ReverseCleanTrig = 0;
+//        ReverseCleanCmd = 1;
+//        ReverseCleanX10ms = 500;
+//        
+//        KeyOnOffCmd = 1;
+//        KeyOnOffTrig = 1;
+//      }
+//        
+//      if(ReverseCleanX10ms > 0)
+//        ReverseCleanX10ms--;
+//      else
+//      {
+//        ReverseCleanCmd = 0;
+//        KeyOnOffCmd = 0;
+//      }
+//    }
+//    else
+//    {
+//      if(KeyOnLockLvPre == 0)                  // 当开关状态脱离关闭态，立即运行
+//      {
+//        KeyOnOffCmd = 1;
+//        KeyOnOffTrig = 1;
+//      }
+//    }
+//    // b. 有
+////    if(KeyOnLockLv == 0)                       // 关闭态确保无输出，
+////    {
+////      KeyOnOffCmd = 0;
+////    }
+////    else
+////    {
+////      if(KeyOnLockLvPre == 0)                  // 当开关状态脱离关闭态，立即运行
+////      {
+////        KeyOnOffCmd = 1;
+////        KeyOnOffTrig = 1;
+////      }
+////    }
+//    // a.b. 结束
+    // ----------------------------------------△ //
+
+    // ▲--------------------------------------▲ //
+
+    // ▼--------------------------------------▼ //
+    // 3. 启停触碰按钮控制
+
+//    KeyOnOff.New = KEY_ONOFF;//1;//
+//    
+//    if(KeyOnOff.New == KeyOnOff.Old)
+//      KeyOnOff.Filt = KeyOnOff.New;
+//    else
+//      KeyOnOff.Old = KeyOnOff.New;
+//    
+//    // 获得调速端口状态
+//    KeyOnOff.Rise = 0;                  // 清除上跳变沿
+//    KeyOnOff.Fall = 0;                  // 清除下跳变沿
+//    KeyOnOff.PreLv = KeyOnOff.Lv;       // 保存上次值
+//    KeyOnOff.Lv = KeyOnOff.Filt;        // 读取本次值
+
+//    if(KeyOnOff.Lv != KeyOnOff.PreLv)   // 如本次不同于上次，判断是何种跳变
+//    {
+//      if(KeyOnOff.Lv == 1)              // 本次为高
+//        KeyOnOff.Rise = 1;              // 上升沿置位
+//      else                              // 否则为下降沿
+//        KeyOnOff.Fall = 1;
+//    }
+//    
+//    if(KeyOnOff.Fall == 1)              // KeyOnOff.Rise
+//    {
+//      KeyOnOff.Fall = 0;
+//      
+//      if(KeyOnOffCmd == 0)
+//      {
+//        KeyOnOffCmd = 1;
+//        KeyOnLockLv = 1;
+//        KeyOnOffTrig = 1;
+//      }
+//      else
+//      {
+////        if(KeyOnLockLv == 1)
+////          KeyOnLockLv = 2;
+////        else
+//        {
+//          KeyOnOffCmd = 0;
+//          KeyOnLockLv = 0;
+//        }
+//      }
+//    }
+
+    // ▲--------------------------------------▲ //
+    
+    if(RePowerRunTrig == 1)
+    {
+      if(KeyOnLockLv > 0)
+      {
+        KeyOnOffCmd = 1;
+        KeyOnOffTrig = 1;
+      }
+      
+      RePowerRunTrig = 0;
+    }
+    
+    if(KeyOnOffCmd == 0)
+      KeyGoDuty = 0;
+    
+  }
+  else if(KeyPro1msTmr == 3)
+  {
+    // 总开关有效时，检测各按钮
+    {
+      KeySpeed.New = KEY_SPEED;
+      // 连续两次检测为同一值，确认当前值
+      if(KeySpeed.New == KeySpeed.Old)
+        KeySpeed.Filt = KeySpeed.New;
+      else
+        KeySpeed.Old = KeySpeed.New;
+      
+      KeyHeat.New = KEY_HEAT;
+      if(KeyHeat.New == KeyHeat.Old)
+        KeyHeat.Filt = KeyHeat.New;
+      else
+        KeyHeat.Old = KeyHeat.New;
+      
+      KeyCool.New = KEY_COOL;
+      if(KeyCool.New == KeyCool.Old)
+        KeyCool.Filt = KeyCool.New;
+      else
+        KeyCool.Old = KeyCool.New;
+      
+      // 获得调速端口状态
+      KeySpeed.Rise = 0;                  // 清除上跳变沿
+      KeySpeed.Fall = 0;                  // 清除下跳变沿
+      KeySpeed.PreLv = KeySpeed.Lv;       // 保存上次值
+      KeySpeed.Lv = KeySpeed.Filt;        // 读取本次值
+       
+      if(KeySpeed.Lv != KeySpeed.PreLv)   // 如本次不同于上次，判断是何种跳变
+      {
+        if(KeySpeed.Lv == 1)              // 本次为高
+          KeySpeed.Rise = 1;              // 上升沿置位
+        else                              // 否则为下降沿
+        KeySpeed.Fall = 1;
+      }
+      
+      // 获得加热端口状态
+      KeyHeat.Rise = 0;                 // 清除上跳变沿
+      KeyHeat.Fall = 0;                 // 清除下跳变沿
+      KeyHeat.PreLv = KeyHeat.Lv;       // 保存上次值
+      KeyHeat.Lv = KeyHeat.Filt;
+    
+      if(KeyHeat.Lv != KeyHeat.PreLv)   // 如本次不同于上次，判断是何种跳变
+      {
+        if(KeyHeat.Lv == 1)             // 本次为高
+          KeyHeat.Rise = 1;             // 上升沿置位
+        else                            // 否则为下降沿
+        KeyHeat.Fall = 1;
+      }
+      
+      // 获得冷风端口状态
+      KeyCool.Rise = 0;                 // 清除上跳变沿
+      KeyCool.Fall = 0;                 // 清除下跳变沿
+      KeyCool.PreLv = KeyCool.Lv;       // 保存上次值
+    
+      KeyCool.Lv = KeyCool.Filt;
+
+      if(KeyCool.Lv != KeyCool.PreLv)   // 如本次不同于上次，判断是何种跳变
+      {
+        if(KeyCool.Lv == 1)             // 本次为高
+          KeyCool.Rise = 1;             // 上升沿置位
+        else                            // 否则为下降沿
+        KeyCool.Fall = 1;
+      }
+
+      // 有效状态计时
+      if(KeySpeed.Lv == 0)
+      {
+        if(++KeySpeedActX10ms == 100)
+          ReverseCleanTrig = 1;
+        else if(KeySpeedActX10ms >= 101)
+          KeySpeedActX10ms = 101;
+      }
+      else
+        KeySpeedActX10ms = 0;
+
+    }
+  }
+  else if(KeyPro1msTmr == 4)
+  {
+    if(KeyOnOffCmd == 1)       // 开启时各按键有效
+    {
+
+      // 
+      if(KeyOnLockLv != 0)     // 一键冷风不考虑锁定态
+      {
+        // ▼--------------------------------------▼ //
+        // 1. 冷风按键处理,按下切换是否冷风
+        if(KeyCool.Fall == 1)
+        {
+          KeyCool.Fall = 0;
+          
+          if(CoolShiftLv == 0)
+            CoolShiftLv = 1;
+          else
+            CoolShiftLv = 0;
+          
+          CoolCmdLv = CoolShiftLv;
+        }
+        // ▲--------------------------------------▲ //
+        
+        // ▼--------------------------------------▼ //
+        // 2. 冷风按键处理,只在按下时冷风
+//        if(KeyCool.Lv == 0)
+//          CoolCmdLv = CoolShiftLv = 1;
+//        else
+//          CoolCmdLv = CoolShiftLv = 0;
+        // ▲--------------------------------------▲ //
+      }
+      
+      if(KeyOnLockLv == 1)    // 锁定时调速调温无效
+      {
+        // 调速按键处理
+        if(KeySpeed.Fall == 1)
+        {
+          KeySpeed.Fall = 0;
+          
+          SpeedShiftStep++;
+          CalSpeedStepToCmd();
+        }
+        
+        // 2挡处理
+//        if(KeySpeed.Fall == 1)
+//        {
+//          KeySpeed.Fall = 0;
+//          
+//          SpeedShiftStep++;
+//          
+//          if(SpeedShiftStep >= 3)
+//            SpeedShiftStep = 1;
+
+//            SpeedCmdLv = SpeedShiftStep;
+//        }
+        
+        // 加热按键处理
+        if(KeyHeat.Fall == 1)
+        {
+          KeyHeat.Fall = 0;
+
+          // 加热按键取消冷风状态
+          //if(CoolCmdLv == 1)
+          //  CoolCmdLv = 0;
+
+          if(CoolCmdLv == 0)          // 当前非冷风状态，按钮有效
+          {
+            HeatShiftStep++;
+            CalHeatStepToCmd();
+          }
+        }
+      }
+    }
+  }
+  else if(KeyPro1msTmr == 5)
+  {
+    // 根据挡位给定速度
+    if(SpeedCmdLv == 3)
+    {
+      VspSpdCmd = SPEED_LV3;
+      KeyGoDuty = POWER_DUTY_LV3;
+      //VspPwrCmd = POWER_UXI_SMP_LV3;
+    }
+    else if(SpeedCmdLv == 2)
+    {
+      VspSpdCmd = SPEED_LV2;
+      KeyGoDuty = POWER_DUTY_LV2;
+      //VspPwrCmd = POWER_UXI_SMP_LV2;
+    }
+    else // if(SpeedCmdLv == 1)
+    {
+      VspSpdCmd = SPEED_LV1;
+      KeyGoDuty = POWER_DUTY_LV1;
+      //VspPwrCmd = POWER_UXI_SMP_LV1;
+    }
+    
+    if(ReverseCleanCmd == 1)
+      VspSpdCmd = _Q15(60000 / MOTOR_SPEED_BASE);
+    
+    // 限转速或限功率
+    #if (CONTROL_TARGET==CONTROL_TARGET_POWER)
+    {
+      // 限转速
+       if(mcFocCtrl.SpeedFlt > _Q15((GIVEN_MAX_RPM) / MOTOR_SPEED_BASE))
+         KeyGoDutyMax -= 10;
+       else if(mcFocCtrl.SpeedFlt < _Q15((GIVEN_MAX_RPM-1000) / MOTOR_SPEED_BASE))
+         KeyGoDutyMax += 10;
+      
+       if(KeyGoDutyMax > _Q12(1.0))
+         KeyGoDutyMax = _Q12(1.0);
+       else if(KeyGoDutyMax < _Q12(0.15))
+         KeyGoDutyMax = _Q12(0.15);
+       
+       if(KeyGoDuty > KeyGoDutyMax)
+        KeyGoDuty = KeyGoDutyMax;
+    }
+    #elif (CONTROL_TARGET==CONTROL_TARGET_SPEED)
+    {
+      // 限功率，限电流
+      // 给定滞回区，在可控转速范围内做限制
+      if(IBusFilt_mA > (u16)(I_BUS_MAX*1000))               //365)//810)//       
+        VspSpdCmdMax-=10;
+      else if(IBusFilt_mA < (u16)((I_BUS_MAX-0.010)*1000))  //355)//800)//  
+        VspSpdCmdMax+=10;
+      
+      if(VspSpdCmdMax > GIVEN_MAX_SPD)
+        VspSpdCmdMax = GIVEN_MAX_SPD;
+      else if(VspSpdCmdMax < GIVEN_MIN_SPD)
+        VspSpdCmdMax = GIVEN_MIN_SPD;
+
+      if(VspSpdCmd > VspSpdCmdMax)
+        VspSpdCmd = VspSpdCmdMax;
+        
+    }
+    #endif
+    
+    if(KeyOnOffCmd == 0)
+      KeyGoDuty = 0;
+    
+  }
+  else if(KeyPro1msTmr == 6)
+  {
+    // 是否检测电热丝温度。
+//    #if (CHECK_HEATER_TEMPER == 1)
+//    WindTemperNow = HeatTemperCelsius;    // 如是，检测。
+//    HeatAdcValNow = HeatTemperADCVal;
+//    #else
+//    WindTemperNow = 25;                   // 如否，给定当前温度为常温值。
+//    HeatAdcValNow = HEAT_CELSIUS_ADC(100.0);
+//    #endif
+        
+
+//    if(mcState == mcRun)                // 仅在电机运行时开电热丝
+//      HeatDisableFlag = 0;
+//    else
+//    
+    
+  
+    // 确定各挡位热度最高调节量
+
+    if((CoolCmdLv == 1)||(KeyOnOffCmd == 0)||(mcState != mcRun))
+    {
+      HeatDisableFlag = 1;
+      HeatDutyMax = 0;
+    }
+    else
+    {
+      HeatDisableFlag = 0;
+      // 不同挡位对应的电热占空比和温度值
+      if(HeatCmdLv == 4)
+      {
+        if(SpeedCmdLv == 1)
+        {
+          HeatDutyMax = HEAT_DUTY_LV1 + 1; 
+        }
+        else if(SpeedCmdLv == 2)
+        {
+          HeatDutyMax = HEAT_DUTY_LV2;
+        }
+        else
+        {
+          HeatDutyMax = HEAT_DUTY_LV3;
+        }
+        WindTemperRef = HEAT_TEMPER_LV4;
+        HeatAdcValRef = HEAT_ADC_VAL_LV4;
+        
+      }
+      else if(HeatCmdLv == 3)
+      {
+          WindTemperRef = HEAT_TEMPER_LV3;
+          HeatAdcValRef = HEAT_ADC_VAL_LV3;
+        if(SpeedCmdLv == 1)
+        {
+          WindTemperRef = HEAT_TEMPER_LV3 - 2; 
+          HeatDutyMax = HEAT_DUTY_LV3 - 2;
+        }
+        else if(SpeedCmdLv == 2)
+        {
+          HeatDutyMax = HEAT_DUTY_LV3 - 1;
+        }
+        else
+        {
+          HeatDutyMax = HEAT_DUTY_LV3;
+        }   
+      }
+      else if(HeatCmdLv == 2)
+      {
+       if(SpeedCmdLv == 1)
+       {
+         WindTemperRef = HEAT_TEMPER_LV2 - 2; 
+         HeatDutyMax = HEAT_DUTY_LV2 - 4;
+       }
+       else if(SpeedCmdLv == 2)
+       {
+        HeatDutyMax = HEAT_DUTY_LV2 - 2;
+        WindTemperRef = HEAT_TEMPER_LV2;
+        HeatAdcValRef = HEAT_ADC_VAL_LV2;
+       }
+       else
+       {
+        HeatDutyMax = HEAT_DUTY_LV2;
+        WindTemperRef = HEAT_TEMPER_LV2;
+        HeatAdcValRef = HEAT_ADC_VAL_LV2;
+       }
+      }
+      else if(HeatCmdLv == 1)
+      {
+        if(SpeedCmdLv == 1)
+       {
+        HeatDutyMax = HEAT_DUTY_LV1 - 2;
+        WindTemperRef = HEAT_TEMPER_LV1;
+        HeatAdcValRef = HEAT_ADC_VAL_LV1;
+       }
+        else if(SpeedCmdLv == 2)
+       {
+         HeatDutyMax = HEAT_DUTY_LV1 - 1;
+       }
+       else
+       {
+        HeatDutyMax = HEAT_DUTY_LV1;
+       }
+      }
+      else
+      {
+        HeatDutyMax = 0;
+        WindTemperRef = 10;
+        HeatAdcValRef = 4096;
+      }
+    }
+    
+    // 两种电热丝控制方式，一不控温，二控温
+    // ▼--------------------------------------▼ //
+    // 1.根据挡位确定输出量-占空比，不调温
+//    HeatDuty = HeatDutyMax;
+    // ▲--------------------------------------▲ //
+    
+    // ▼--------------------------------------▼ //
+    // 2.根据挡位给定的温度，调节输出量-占空比，调温
+    #if (CHECK_HEATER_TEMPER == 1)    // 如需检测电热丝温度
+    // a.b. 二选一
+    // a.根据测得摄氏度
+    if(HeatTemperCelsius > WindTemperRef)             //当前温度高于给定值，设置过温标志
+    {
+      WindTemperHigh = 1;
+      WindTemperDelta = 0;
+//      SaveCnt = 0;
+    }
+    else if(HeatTemperCelsius <= (WindTemperRef-0))    //为防止临界点识别抖动，当前温度低于给定值减去滞回区间，
+    {
+      WindTemperHigh = 0;
+      WindTemperDelta = WindTemperRef - HeatTemperCelsius;
+    }
+    
+    // b.根据ADC采样值
+//    if(HeatTemperADCVal < HeatAdcValRef)             //当前温度高于给定值，设置过温标志
+//      WindTemperHigh = 1;
+//    else if(HeatTemperADCVal > (HeatAdcValRef+10))  //为防止临界点识别抖动，当前温度低于给定值减去滞回区间，
+//      WindTemperHigh = 0;
+    
+    // a.b.结束
+    if(HeatTemperADCVal > 4050)                       // 线路故障时，采样值将接近Q12(1),安全值以下开启电热丝
+      HeatDutyMax = 0;
+    
+    #else                                             // 如否，不测温度，保持加热状态
+    WindTemperHigh = 0;
+    
+    #endif
+    
+    if(CoolCmdLv != 1)
+		{
+//      if(++HeatRegulTmr >= 6)
+//      {
+//        HeatRegulTmr = 0;
+//        
+//        if(WindTemperHigh == 1)
+//        {
+//          if(HeatDutyAlt > 0)
+//            HeatDutyAlt--;
+//          
+//          HeatDutyAltTop = 0;
+//        }
+//        else
+//        {
+//          HeatDutyAlt++;
+//          if(WindTemperDelta < 20)
+//            HeatDutyAltTop = WindTemperDelta;
+//          else
+//            HeatDutyAltTop = 19;
+//        }
+//      }
+      HeatDutyAlt = HeatDutyMax;
+    }
+    else
+    {
+      HeatRegulTmr = 0;
+    }
+    // ▽---------------------------------------- //
+    // 4挡热为冷热循环风
+    #if (HEAT_CMD_LV_MAX == 4)
+    if(HeatCmdLv == 4 && CoolCmdLv == 0)
+    {
+      if(++HeatLv4X10ms > 1142)
+        HeatLv4X10ms = 0;
+      else if(HeatLv4X10ms > 428)
+        HeatDutyMax = 0;
+    }
+    else
+      HeatLv4X10ms = 0;
+    #endif
+    // ----------------------------------------△ //
+        
+//    if(HeatDutyAlt > HeatDutyAltTop)
+//      HeatDutyAlt = HeatDutyAltTop;
+    
+    if(HeatDutyAlt > HeatDutyMax)
+      HeatDutyAlt = HeatDutyMax;
+    
+
+    HeatDutyH = HeatDutyAlt/2;
+		HeatDutyL = HeatDutyH + HeatDutyAlt%2;
+
+    // ▲--------------------------------------▲ //
+    
+  }
+  else if(KeyPro1msTmr == 7)
+  {
+    
+    // ▽---------------------------------------- //
+    // 速度指示灯变量全部清除
+    LedSpd1 = LED_SET_OFF;
+    LedSpd2 = LED_SET_OFF;
+    LedSpd3 = LED_SET_OFF;
+    
+    // 热度指示灯变量全部清除
+    LedHeat1 = LED_SET_OFF;
+    LedHeat2 = LED_SET_OFF;
+    LedHeat3 = LED_SET_OFF;
+    
+    // 根据速度指令亮灯
+    if(mcState == mcRun)
+    {
+      if(KeyOnOffCmd == 1)
+      {
+        if(SpeedCmdLv == 1)
+        {
+          LedSpd1 = LED_SET_ON;
+        }
+        else if(SpeedCmdLv == 2)
+        {
+          LedSpd1 = LED_SET_ON;
+          LedSpd2 = LED_SET_ON;
+        }
+        else if(SpeedCmdLv == 3)
+        {
+          LedSpd1 = LED_SET_ON;
+          LedSpd2 = LED_SET_ON;
+          LedSpd3 = LED_SET_ON;
+        }
+      }
+    }
+    else
+    {
+      if(++LedAlarmFlashCnt < 50)
+      {
+        if(AlarmFlag2 & 0x01)
+        {
+          LedSpd1 = LED_SET_ON;
+          LedSpd2 = LED_SET_ON;
+          LedSpd3 = LED_SET_ON;
+          LedHeat1 = LED_SET_ON;
+          LedHeat2 = LED_SET_ON;
+          LedHeat3 = LED_SET_ON;
+        }
+        else if(AlarmFlag & 0x01)
+        {
+          LedSpd1 = LED_SET_ON;
+          LedSpd2 = LED_SET_ON;
+        }
+        else if(AlarmFlag & 0x02)
+        {
+          LedSpd1 = LED_SET_ON;
+          LedHeat1 = LED_SET_ON;
+          LedHeat2 = LED_SET_ON;
+        }
+        else if(AlarmFlag & 0x04)
+        {
+          LedHeat1 = LED_SET_ON;
+          LedHeat2 = LED_SET_ON;
+          LedHeat3 = LED_SET_ON;
+        }
+        else if(AlarmFlag & 0x08)
+        {
+          LedSpd3 = LED_SET_ON;
+          LedHeat1 = LED_SET_ON;
+          LedHeat2 = LED_SET_ON;
+          LedHeat3 = LED_SET_ON;
+        }
+        else if(AlarmFlag & 0x10)
+        {
+          LedSpd1 = LED_SET_ON;
+        }
+        else if(AlarmFlag & 0x40)
+        {
+          LedSpd2 = LED_SET_ON;
+          LedSpd3 = LED_SET_ON;
+          LedHeat1 = LED_SET_ON;
+          LedHeat2 = LED_SET_ON;
+          LedHeat3 = LED_SET_ON;
+        }
+      }
+      else if(LedAlarmFlashCnt > 100)
+      {   
+        LedAlarmFlashCnt = 0;
+      }
+    }
+    
+//    if(mcState != mcRun)
+//    {
+//      if(SpeedCmdLv == 1)
+//        LedSpd1 = LED_SET_ON;
+//      else if(SpeedCmdLv == 2)
+//        LedSpd2 = LED_SET_ON;
+//      else
+//        LedSpd3 = LED_SET_ON;
+//    }
+    
+    LED_SPEED_1 = LedSpd1;
+    LED_SPEED_2 = LedSpd2;
+    LED_SPEED_3 = LedSpd3;
+    // ----------------------------------------△ //
+    
+    // ▽---------------------------------------- //
+    // 热度指示灯变量全部清除
+//    LedHeat1 = LED_SET_OFF;
+//    LedHeat2 = LED_SET_OFF;
+//    LedHeat3 = LED_SET_OFF;
+    
+    // 根据热度指令亮灯
+    if(HeatDisableFlag == 0)
+    {
+      if(HeatCmdLv == 1)
+      {
+        LedHeat1 = LED_SET_ON;
+      }
+      else if(HeatCmdLv == 2)
+      {
+        LedHeat1 = LED_SET_ON;
+        LedHeat2 = LED_SET_ON;
+      }
+      else if(HeatCmdLv == 3)
+      {
+        LedHeat1 = LED_SET_ON;
+        LedHeat2 = LED_SET_ON;
+        LedHeat3 = LED_SET_ON;
+      }
+      else if(HeatCmdLv == 4)
+      {
+          
+        if(++LedAltX10ms < 70)
+        {LedHeat1 = LED_SET_ON;}
+        else if(LedAltX10ms < 140)
+        {
+          LedHeat1 = LED_SET_ON;
+          LedHeat2 = LED_SET_ON;
+        }
+        else if(LedAltX10ms < 210)
+        {
+          LedHeat1 = LED_SET_ON;
+          LedHeat2 = LED_SET_ON;
+          LedHeat3 = LED_SET_ON;
+        }
+        else if(LedAltX10ms < 280)
+        {
+          ;
+        }
+        else
+          LedAltX10ms = 0;
+      }
+    }
+    else
+    {
+      LedAltX10ms = 0;
+    }
+//    if(mcState != mcRun)
+//    {
+//    
+//      if(mcState != mcReady)
+//      {
+//        if(HeatCmdLv == 1)
+//          LedHeat1 = LED_SET_ON;
+//        else if(HeatCmdLv == 2)
+//          LedHeat2 = LED_SET_ON;
+//        else
+//          LedHeat3 = LED_SET_ON;
+//      }
+//    }
+
+    LED_HEAT_1 = LedHeat1;
+    LED_HEAT_2 = LedHeat2;
+    LED_HEAT_3 = LedHeat3;
+    // ----------------------------------------△ //
+  }
+//  else if(KeyPro1msTmr == 8)
+//  {
+
+//   
+//  }
+//  else if(KeyPro1msTmr == 9)
+//  {
+    // 运行彩灯，停止紫，运行绿
+//    if(KeyOnOffCmd == 0)
+//    {
+//      LED_RED = LED_SET_ON;
+//      LED_GREEN = LED_SET_OFF;
+//      LED_BLUE = LED_SET_ON;
+//    }
+//    else
+//    {
+//      LED_RED = LED_SET_OFF;
+//      LED_GREEN = LED_SET_ON;
+//      LED_BLUE = LED_SET_OFF;
+//    }
+//  }
+
+  #if (THRYRST_ENABLE == 1)
+  // Thryster 控制--------------------------------//
+  // 在正常交流用电情况下每10ms可测得一次过零
+  // 交流电源过零标志在中断处理中设置，此处每毫秒检测标志位
+  if(ACCrossForThryrist == 1)
+  {
+    ACCrossForThryrist = 0;
+    
+    // 输出量占空比处理，10次过零为一个周期
+    if(HeatDutyOnCnt < HeatDutyH)
+      ThryristTrigKeepCnt = 3;      // 设置晶闸管触发保持时长 -毫秒
+    else
+      ThryristTrigKeepCnt = 0;
+    
+    if(++HeatDutyOnCnt >= 10)
+      HeatDutyOnCnt = 0;
+    
+    if(HeatDutyOnCnt2 >= (10 - HeatDutyL))
+      ThryristTrigKeepCnt2 = 3;      // 设置晶闸管触发保持时长 -毫秒
+     else
+      ThryristTrigKeepCnt2 = 0;
+    
+    if(++HeatDutyOnCnt2 >= 10)
+      HeatDutyOnCnt2 = 0;   
+    
+//    if(WindTemperHigh == 0)             //当前温度高于给定值，设置过温标志
+//    {
+//      SaveCnt = 0;
+//    }
+//    else
+//    {
+//      SaveLine[SaveCnt] = HeatTemperCelsius;
+//      if(++SaveCnt>=24)
+//        SaveCnt = 0;
+//    }
+  }
+    
+  
+  // 晶闸管导通信号保持时长N毫秒 二选一
+  // ▼--------------------------------------▼ //
+  // 1. 同时控制两个管子
+//  if(ThryristTrigKeepCnt > 0)
+//  {
+//    ThryristTrigKeepCnt --;
+
+//    if(RunningX1ms > 1000)
+//    {
+//      HEAT_WIRE_H_ON;
+//      HEAT_WIRE_L_ON;//HEAT_WIRE_L_OFF;//
+//    }
+//    else
+//    {
+//      HEAT_WIRE_H_OFF;
+//      HEAT_WIRE_L_OFF;
+//    }
+//  }
+//  else
+//  {
+//    HEAT_WIRE_H_OFF;
+//    HEAT_WIRE_L_OFF;
+//  }
+  // ◆--------------------------------------◆ //
+  // 2. 分别控制两个管子
+  if(ThryristTrigKeepCnt > 0)
+  {
+//    ThryristTrigKeepCnt --;
+      
+    if(RunningX1ms > 1000)
+      Heat_wire_H = HEAT_WIRE_H_ON;
+    else
+      Heat_wire_H = HEAT_WIRE_H_OFF;
+  }
+  else
+    Heat_wire_H = HEAT_WIRE_H_OFF;
+  
+
+  if(ThryristTrigKeepCnt2 > 0)
+  {
+//    ThryristTrigKeepCnt2 --;
+      
+    if(RunningX1ms > 1000)
+      Heat_wire_L = HEAT_WIRE_L_ON;
+    else
+      Heat_wire_L = HEAT_WIRE_L_OFF;
+  }
+  else
+    Heat_wire_L = HEAT_WIRE_L_OFF;
+  // ▲--------------------------------------▲ //
+  #endif
+  
+//  // 调试中，关闭晶闸管
+//  HEAT_WIRE_H_OFF;
+//  HEAT_WIRE_L_OFF;
+
+  if(PwrOnStage == 0)
+  {
+    KeyGoDuty = _Q12(0);
+    
+    if((PwrOnX1ms > 50)||(QuickStartFlag==1))
+    {
+      PwrOnStage = 2;
+      KeyOnOffCmd = 1;
+      //KeyOnLockLv = 1;
+      KeyOnOffTrig = 0;
+    }
+  }
+}
